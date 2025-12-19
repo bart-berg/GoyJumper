@@ -41,7 +41,8 @@ npm install howler
 ```
 npm install matter-js
 ```
-###Te rzeczy możesz dodać później, gdy faktycznie będą potrzebne.
+### Te rzeczy można dodać później, gdy faktycznie będą potrzebne.
+
 
 
 
