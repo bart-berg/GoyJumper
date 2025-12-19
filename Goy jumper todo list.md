@@ -1,47 +1,46 @@
 # Goy jumper todo list:
-✅ CO MUSISZ ZAINSTALOWAĆ (OBOWIĄZKOWE)
+##✅ CO MUSISZ ZAINSTALOWAĆ (OBOWIĄZKOWE)
 1️⃣ Node.js
 
 Bez tego Vite nie zadziała.
 
-👉 Pobierz z: https://nodejs.org
+##👉 Pobierz z: https://nodejs.org
 
-✔ wybierz LTS
+##✔ wybierz LTS
 
 Sprawdź po instalacji:
-
+```
 node -v
 npm -v
+```
 
-
-2️⃣ Vite (przez npm)
-
+##2️⃣ Vite (przez npm)
 Nie instalujesz go globalnie – Vite doda się do projektu.
-
 npm create vite@latest
 
 
-To automatycznie instaluje:
-
+##To automatycznie instaluje:
 Vite
-
-TypeScript
-
+JavaScript
 potrzebne configi
 
 
-⭐ OPCJONALNE (POLECANE, ALE NIE WYMAGANE)
-🔹 ESLint (czystszy kod)
+##⭐ OPCJONALNE (POLECANE, ALE NIE WYMAGANE)
+###🔹 ESLint (czystszy kod)
+```
 npm install -D eslint
-
-🔹 Prettier (formatowanie)
+```
+###🔹 Prettier (formatowanie)
+```
 npm install -D prettier
-
-🔹 Dźwięk
+```
+###🔹 Dźwięk
+```
 npm install howler
-
-🔹 Fizyka
+```
+###🔹 Fizyka
+```
 npm install matter-js
+```
+###Te rzeczy możesz dodać później, gdy faktycznie będą potrzebne.
 
-
-Te rzeczy możesz dodać później, gdy faktycznie będą potrzebne.
