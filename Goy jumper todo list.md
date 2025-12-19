@@ -18,7 +18,7 @@ Nie instalujesz go globalnie – Vite doda się do projektu.
 npm create vite@latest
 
 
-## To automatycznie instaluje:
+To automatycznie instaluje:
 Vite
 JavaScript
 potrzebne configi
@@ -42,6 +42,7 @@ npm install howler
 npm install matter-js
 ```
 ###Te rzeczy możesz dodać później, gdy faktycznie będą potrzebne.
+
 
 
 
