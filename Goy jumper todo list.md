@@ -1,5 +1,6 @@
 # Goy jumper todo list:
-Trzbea mieć node i npm
+Trza mieć node i npm
+
 
 
 
