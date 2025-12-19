@@ -1,7 +1,3 @@
-Jasne — przepisuję treść z obrazka w formie tekstowej (Markdown):
-
----
-
 ## JAK WPROWADZIĆ ZMIANY W PROJEKCIE
 
 ### 1. Zaakceptuj zaproszenie na GitHubie
