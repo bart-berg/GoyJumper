@@ -1,5 +1,5 @@
 # Goy jumper todo list:
-##✅ CO MUSISZ ZAINSTALOWAĆ (OBOWIĄZKOWE)
+## CO MUSISZ ZAINSTALOWAĆ (OBOWIĄZKOWE)
 1️⃣ Node.js
 
 Bez tego Vite nie zadziała.
@@ -43,4 +43,5 @@ npm install howler
 npm install matter-js
 ```
 ###Te rzeczy możesz dodać później, gdy faktycznie będą potrzebne.
+
 
