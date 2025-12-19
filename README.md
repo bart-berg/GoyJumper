@@ -65,3 +65,5 @@ git checkout -b <nazwa_zadania>
 ```
 
 ---
+
+cum
