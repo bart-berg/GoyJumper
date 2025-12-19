@@ -1,31 +1,71 @@
-JAK WPROWADZIĆ ZMIANY W PROJEKCIE
-Zaakceptuj zaproszenie na githubie
-Sklonuj projekt lokalnie (tylko raz!!!!!)
-git clone https://github.com/simoneqq/web-game.git
+Jasne — przepisuję treść z obrazka w formie tekstowej (Markdown):
+
+---
+
+## JAK WPROWADZIĆ ZMIANY W PROJEKCIE
+
+### 1. Zaakceptuj zaproszenie na GitHubie
+
+### 2. Sklonuj projekt lokalnie (tylko raz!!!!)
+
+```bash
+git clone https://github.com/simonneq/web-game.git
 cd web-game
 npm install
-Pobierz najnowsze zmiany
-git pull
-Stwórz branch do zadania
-git checkout -b <nazwa zadania>
-np. git checkout -b fix-collisions
+```
 
-Wprowadzenie zmian
+### 3. Pobierz najnowsze zmiany
+
+```bash
+git pull
+```
+
+### 4. Stwórz branch do zadania
+
+```bash
+git checkout -b <nazwa_zadania>
+```
+
+np.
+
+```bash
+git checkout -b fix-collisions
+```
+
+### 5. Wprowadzenie zmian
+
+```bash
 // dodaj zmiany do zapisu
 git add .
 // zapisz zmiany
 git commit -m "opis zmian"
-Dodaj branch na GitHuba
-git push origin <nazwa zadania>
-Stwórz pull requesta (PR)
+```
 
-Wejdź na GitHuba
-Pojawi się przycisk Compare & pull request
-Wyślij pull request
-Czekaj aż ja zaakceptuje PR albo jak ci zależy to sam to zrób
+### 6. Dodaj branch na GitHuba
 
-Po zaakceptowaniu PR pobierz aktualizacje
+```bash
+git push origin <nazwa_zadania>
+```
 
+### 7. Stwórz pull requesta (PR)
+
+* Wejdź na GitHuba
+* Pojawi się przycisk **Compare & pull request**
+* Wyślij pull request
+
+### 8. Czekaj aż ja zaakceptuję PR albo jak ci zależy to sam to zrób
+
+### 9. Po zaakceptowaniu PR pobierz aktualizacje
+
+```bash
 git checkout main
 git pull
-jak chcesz rozpoczać nowe zadanie to znowu git checkout -b <nazwa zadania>
+```
+
+Jak chcesz rozpocząć nowe zadanie, to znowu:
+
+```bash
+git checkout -b <nazwa_zadania>
+```
+
+---
