@@ -1,5 +1,5 @@
 # Story
-Grasz jako 29 letni rycerz o imieniu Jonajt ( John Knight, wiem pomysłowe, subject to change ale mi się podoba bo nie brzmi najgorzej lol ) który po swojej śmierci trafia do piekła. Próbuje wspiąć się na górę by z niego wyjść, przemierzająć różne kręgi piekła ( Skalniak jak nie chce ci się wymyślać kręgów mogę za ciebie ). Po drodze spotyka różne postacie które podobnie jak on tutaj trafiły ( subject to add czy coś ). Jonajt nic nie pamięta po swojej śmierci, ale podróżując po piekle przypomina sobie swoje życie ( true ending ).
+Grasz jako 29 letni rycerz o imieniu Jonajt ( John Knight, wiem pomysłowe, subject to change ale mi się podoba bo nie brzmi najgorzej lol ) który po swojej śmierci trafia do piekła. Próbuje wspiąć się na górę by z niego wyjść, przemierzająć różne kręgi piekła. Po drodze spotyka różne postacie które podobnie jak on tutaj trafiły ( subject to add czy coś ). Jonajt nic nie pamięta po swojej śmierci, ale podróżując po piekle przypomina sobie swoje życie ( true ending ).
 
 
 # Backstory ( dowiadujesz się w true end )
