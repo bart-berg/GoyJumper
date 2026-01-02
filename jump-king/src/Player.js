@@ -5,28 +5,27 @@ export class Player {
         this.x = x;
         this.y = y;
 
-        // --- WYMIARY (Dostosowane do 480x360) ---
         this.width = 14; 
         this.height = 22; 
         
         this.velX = 0;
         this.velY = 0;
 
-        // --- WARTOŚCI FIZYKI (Styl Jump King) ---
+        // --- WARTOŚCI FIZYKI ---
         this.acceleration = 1200; 
         this.maxSpeed = 150;
         this.friction = 2500;
         this.gravity = 2100;
         
         this.jumpCharge = 0;
-        this.maxJumpCharge = 860; // Siła skoku dopasowana do wysokości 360px
+        this.maxJumpCharge = 860; 
+        this.minJumpCharge = 100; // NOWE: Minimalna siła skoku przy tapnięciu
         this.chargeSpeed = 1200;
         
         this.jumpCharging = false;
         this.onGround = false;
         this.jumpDirection = 0;
 
-        // --- ZJAZDY (SLOPES) ---
         this.onSlope = false;
         this.slideSpeed = 0;
         this.maxSlideSpeed = 500;
@@ -44,9 +43,13 @@ export class Player {
                 this.jumpCharging = true;
                 this.velX = 0;
                 this.jumpDirection = 0;
+                // Startujemy od razu od wartości minimalnej
+                this.jumpCharge = this.minJumpCharge;
             }
 
+            // Ładujemy dalej powyżej minimum
             this.jumpCharge += this.chargeSpeed * delta;
+            
             if (input.left) this.jumpDirection = -1;
             else if (input.right) this.jumpDirection = 1;
             else this.jumpDirection = 0;
@@ -87,11 +90,9 @@ export class Player {
             this.onGround = false;
             this.slideSpeed += this.slideAccel * delta;
             this.slideSpeed = Math.min(this.slideSpeed, this.maxSlideSpeed);
-
             const diag = this.slideSpeed * 0.707;
             this.velX = this.slopeDir * diag;
             this.velY = diag;
-
             this.x += this.velX * delta;
             this.y += this.velY * delta;
             return; 
@@ -111,7 +112,6 @@ export class Player {
         for (let plat of platforms) {
             if (this.checkCollision(this, plat)) {
                 if (this.velY > 0) { 
-                    // Lądowanie na platformie
                     if (this.y + this.height - this.velY * delta <= plat.y + 10) {
                         this.y = plat.y - this.height;
                         this.velY = 0;
@@ -119,24 +119,24 @@ export class Player {
                         if (wasInAir) this.velX = 0; 
                     }
                 } else if (this.velY < 0) {
-                    // Uderzenie głową w sufit
                     this.y = plat.y + plat.height;
                     this.velY = 0;
                 }
             }
         }
 
-        // 5. RUCH POZIOMY I KOLIZJE BOCZNE
+        // 5. RUCH POZIOMY I INTELIGENTNE KOLIZJE BOCZNE
         this.x += this.velX * delta;
 
-        // Granice ekranu 480px z efektem odbicia
         if (this.x < 0) { 
             this.x = 0; 
-            this.velX *= -0.6; 
+            if (!this.onGround) this.velX *= -0.7; 
+            else this.velX = 0; 
         }
         if (this.x + this.width > 480) { 
             this.x = 480 - this.width; 
-            this.velX *= -0.6; 
+            if (!this.onGround) this.velX *= -0.7; 
+            else this.velX = 0;
         }
 
         for (let plat of platforms) {
@@ -147,26 +147,24 @@ export class Player {
                     if (this.velX > 0) this.x = plat.x - this.width;
                     else if (this.velX < 0) this.x = plat.x + plat.width;
                     
-                    // Odbicie od ścian platform
-                    this.velX *= -0.6;
+                    if (!this.onGround) {
+                        this.velX *= -0.6;
+                    } else {
+                        this.velX = 0;
+                    }
                 }
             }
         }
 
-        // Zaokrąglanie pozycji dla uniknięcia błędów renderingu
         this.x = Math.round(this.x * 100) / 100;
         this.y = Math.round(this.y * 100) / 100;
     }
 
     performJump() {
         const chargePct = this.jumpCharge / this.maxJumpCharge;
-        
-        // Skok pionowy (Y) - NIE DOTYKAMY, bo piszesz, że jest perfekcyjny
         this.velY = -this.jumpCharge;
 
         if (this.jumpDirection !== 0) {
-            // Zwiększyłem bazę ze 140 na 155 i bonus ze 110 na 125.
-            // To sprawi, że skok będzie odczuwalnie dalszy, ale zachowa tę samą wysokość.
             this.velX = this.jumpDirection * (155 + (chargePct * 125)); 
         } else {
             this.velX = 0;
@@ -189,22 +187,17 @@ export class Player {
         const leftX = this.x;
         const rightX = this.x + this.width;
         const feetY = this.y + this.height;
-
         let hit = false;
         let highestY = Infinity;
-
         for (let px of [leftX, rightX]) {
             if (px < Math.min(slope.x1, slope.x2) || px > Math.max(slope.x1, slope.x2)) continue;
-
             const t = (px - slope.x1) / (slope.x2 - slope.x1);
             const lineY = slope.y1 + t * (slope.y2 - slope.y1);
-
             if (feetY >= lineY - 2 && feetY <= lineY + 6) {
                 hit = true;
                 highestY = Math.min(highestY, lineY);
             }
         }
-
         if (hit) {
             this.y = highestY - this.height - 0.5;
             this.onGround = true;
@@ -213,11 +206,9 @@ export class Player {
     }
 
     draw(ctx) {
-        // Rysowanie postaci
         ctx.fillStyle = this.jumpCharging ? "#ff7777" : "red";
         ctx.fillRect(this.x, this.y, this.width, this.height);
         
-        // Pasek ładowania skoku nad głową
         if (this.jumpCharging) {
             ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
             ctx.fillRect(this.x, this.y - 12, this.width, 4);
