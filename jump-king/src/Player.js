@@ -19,7 +19,7 @@ export class Player {
         
         this.jumpCharge = 0;
         this.maxJumpCharge = 860; 
-        this.minJumpCharge = 100; // NOWE: Minimalna siła skoku przy tapnięciu
+        this.minJumpCharge = 100; 
         this.chargeSpeed = 1200;
         
         this.jumpCharging = false;
@@ -43,11 +43,9 @@ export class Player {
                 this.jumpCharging = true;
                 this.velX = 0;
                 this.jumpDirection = 0;
-                // Startujemy od razu od wartości minimalnej
                 this.jumpCharge = this.minJumpCharge;
             }
 
-            // Ładujemy dalej powyżej minimum
             this.jumpCharge += this.chargeSpeed * delta;
             
             if (input.left) this.jumpDirection = -1;
@@ -125,20 +123,20 @@ export class Player {
             }
         }
 
-        // 5. RUCH POZIOMY I INTELIGENTNE KOLIZJE BOCZNE
+        // 5. RUCH POZIOMY I KOLIZJE
         this.x += this.velX * delta;
 
+        // Granice ekranu - TYLKO ZATRZYMANIE
         if (this.x < 0) { 
             this.x = 0; 
-            if (!this.onGround) this.velX *= -0.7; 
-            else this.velX = 0; 
+            this.velX = 0; 
         }
         if (this.x + this.width > 480) { 
             this.x = 480 - this.width; 
-            if (!this.onGround) this.velX *= -0.7; 
-            else this.velX = 0;
+            this.velX = 0;
         }
 
+        // Kolizje z platformami - ODBIJANIE (0.7)
         for (let plat of platforms) {
             if (this.checkCollision(this, plat)) {
                 let isStandingOnThis = (Math.abs((this.y + this.height) - plat.y) < 1.1);
@@ -148,7 +146,7 @@ export class Player {
                     else if (this.velX < 0) this.x = plat.x + plat.width;
                     
                     if (!this.onGround) {
-                        this.velX *= -0.6;
+                        this.velX *= -0.7; // Przywrócone Twoje 0.7
                     } else {
                         this.velX = 0;
                     }

@@ -1,4 +1,4 @@
-import { Player } from "./player.js";
+import { Player } from "./Player.js";
 import { input, startPressed, consumeStart } from "./input.js";
 import { platforms, slopes } from "./Level.js";
 
