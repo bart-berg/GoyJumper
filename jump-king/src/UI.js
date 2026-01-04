@@ -1,5 +1,3 @@
-// UI.js
-
 const menuImage = new Image();
 menuImage.src = "./soy.jpg";
 
@@ -15,7 +13,6 @@ export const UI = {
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, 480, 360);
 
-        // W drawMenu, przed drawImage
         if (menuImage.complete) {
             ctx.drawImage(menuImage, 40, 50, 70, 140);
             ctx.drawImage(menuImage, 370, 50, 70, 140);
@@ -32,7 +29,6 @@ export const UI = {
         ctx.restore();
     },
 
-    // TUTAJ BYŁ BŁĄD - dodałem selectedIndex do listy argumentów
     drawPauseMenu(ctx, player, scale, offsetX, offsetY, selectedIndex) {
         ctx.save();
         ctx.translate(offsetX, offsetY);
@@ -60,7 +56,6 @@ export const UI = {
         // Opcje Menu
         const options = ["RESUME", "RESTART", "EXIT"];
         options.forEach((opt, i) => {
-            // Teraz selectedIndex jest już widoczny dla funkcji
             const isSelected = (i === selectedIndex);
 
             ctx.fillStyle = isSelected ? "white" : "#888";
@@ -80,7 +75,6 @@ export const UI = {
         ctx.fillStyle = "white";
         ctx.font = "14px monospace";
         ctx.textAlign = "left";
-        // Rysujemy na sztywno w pozycji 10, 20 względem ramki gry
         ctx.fillText(player.formatTime(player.playTime), 10, 20);
 
         ctx.restore();

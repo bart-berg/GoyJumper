@@ -62,7 +62,7 @@ export class Player {
         // Zakładając, że jeden ekran ma 360px wysokości
         const currentScreenY = Math.floor(this.y / 360) * 360;
 
-        // Filtrujemy platformy: bierzemy tylko te z obecnego, górnego i dolnego ekranu
+        // Filtrujemy platformy
         const activePlatforms = platforms.filter(p => 
             p.y >= currentScreenY - 360 && p.y <= currentScreenY + 720
         );
@@ -241,12 +241,10 @@ export class Player {
         this.jumpCharge = 0;
         this.jumpCharging = false;
         
-        // Ważne: zresetuj też te parametry, jeśli ich używasz
         this.playTime = 0;
         this.jumpCount = 0;
         this.fallCount = 0;
         
-        // Jeśli masz zmienną sprawdzającą czy gracz dotyka ziemi:
         this.onGround = true; 
     }
 
@@ -278,7 +276,6 @@ export class Player {
     draw(ctx) {
         // Postać i pasek ładowania
         ctx.fillStyle = this.jumpCharging ? "#ff7777" : "red";
-        // W draw(ctx)
         ctx.fillRect(Math.round(this.x), Math.round(this.y), this.width, this.height);
         
         if (this.jumpCharging) {

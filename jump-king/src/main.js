@@ -53,7 +53,6 @@ function gameLoop(time) {
     
     if (input.enter) {
       consumeEnter();
-      // Po prostu wchodzimy do gry - dane wczytały się na starcie pliku
       gameState = GameState.PLAYING;
     }
   } 
