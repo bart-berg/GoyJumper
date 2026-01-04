@@ -15,16 +15,15 @@ const GameState = {
 let gameState = GameState.MENU;
 let scale, offsetX, offsetY;
 let lastTime = 0;
-let pauseSelection = 0; // 0: RESUME, 1: RESTART, 2: EXIT
+let pauseSelection = 0; 
 
-const player = new Player(100, 200);
+const player = new Player(240, 303);
+player.loadGame(); // Wczytuje zapis przy starcie/odświeżeniu
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-
   scale = Math.min(canvas.width / 480, canvas.height / 360);
-
   offsetX = (canvas.width - 480 * scale) / 2;
   offsetY = (canvas.height - 360 * scale) / 2;
 }
@@ -37,12 +36,12 @@ function gameLoop(time) {
   const delta = Math.min(rawDelta, 0.05);
   lastTime = time;
 
-  // --- 1. OBSŁUGA PAUZY (ESCAPE) ---
+  // --- 1. OBSŁUGA ESCAPE (PAUZA) ---
   if (input.escape) {
     consumeEscape();
     if (gameState === GameState.PLAYING) {
       gameState = GameState.PAUSED;
-      pauseSelection = 0; // Zawsze zaczynaj od RESUME
+      pauseSelection = 0; 
     } else if (gameState === GameState.PAUSED) {
       gameState = GameState.PLAYING;
     }
@@ -54,35 +53,29 @@ function gameLoop(time) {
     
     if (input.enter) {
       consumeEnter();
-      player.reset();
+      // Po prostu wchodzimy do gry - dane wczytały się na starcie pliku
       gameState = GameState.PLAYING;
     }
   } 
   else if (gameState === GameState.PAUSED) {
     // Nawigacja w pauzie
-    if (input.up) {
-      consumeUp();
-      pauseSelection = (pauseSelection - 1 + 3) % 3;
-    }
-    if (input.down) {
-      consumeDown();
-      pauseSelection = (pauseSelection + 1) % 3;
-    }
+    if (input.up) { consumeUp(); pauseSelection = (pauseSelection - 1 + 3) % 3; }
+    if (input.down) { consumeDown(); pauseSelection = (pauseSelection + 1) % 3; }
 
-    // Wybór opcji w pauzie
     if (input.enter) {
       consumeEnter();
-      if (pauseSelection === 0) {
-        gameState = GameState.PLAYING; // RESUME
-      } else if (pauseSelection === 1) {
+      if (pauseSelection === 0) { // RESUME
+        gameState = GameState.PLAYING;
+      } else if (pauseSelection === 1) { // RESTART
         player.reset();
-        gameState = GameState.PLAYING; // RESTART
-      } else if (pauseSelection === 2) {
-        gameState = GameState.MENU;    // EXIT
+        player.saveGame(); // Czyścimy zapis (nadpisujemy nowym startem)
+        gameState = GameState.PLAYING;
+      } else if (pauseSelection === 2) { // EXIT
+        player.saveGame(); // Zapisujemy przed wyjściem do menu
+        gameState = GameState.MENU;
       }
     }
 
-    // Rysujemy zamrożoną scenę i nakładkę menu
     renderGameScene();
     UI.drawPauseMenu(ctx, player, scale, offsetX, offsetY, pauseSelection);
   } 
@@ -94,14 +87,12 @@ function gameLoop(time) {
   requestAnimationFrame(gameLoop);
 }
 
-// Pomocnicza funkcja rysująca świat gry
 function renderGameScene() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(offsetX, offsetY);
   ctx.scale(scale, scale);
 
-  // Kamera pionowa (ekrany co 360px)
   const screenY = Math.floor(player.y / 360);
   ctx.translate(0, -screenY * 360);
 
@@ -110,7 +101,6 @@ function renderGameScene() {
   player.draw(ctx);
 
   ctx.restore();
-
   UI.drawHUD(ctx, player, scale, offsetX, offsetY);
 }
 

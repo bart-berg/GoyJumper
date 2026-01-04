@@ -246,6 +246,31 @@ export class Player {
         // Jeśli masz zmienną sprawdzającą czy gracz dotyka ziemi:
         this.onGround = true; 
     }
+    
+    saveGame() {
+        const saveDate = {
+            x: this.x,
+            y: this.y,
+            playTime: this.playTime,
+            jumpCount: this.jumpCount,
+            fallCount: this.fallCount
+        };
+        localStorage.setItem("goyJumperSave", JSON.stringify(saveDate));
+    }
+
+    loadGame() {
+        const saved = localStorage.getItem("goyJumperSave");
+        if (saved) {
+            const data = JSON.parse(saved);
+            this.x = data.x;
+            this.y = data.y;
+            this.playTime = data.playTime;
+            this.jumpCount = data.jumpCount;
+            this.fallCount = data.fallCount;
+            return true; // Zwraca true, jeśli wczytano zapis
+        }
+        return false; // Brak zapisu
+    }
 
     draw(ctx) {
         // Postać i pasek ładowania
