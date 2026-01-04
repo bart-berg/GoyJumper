@@ -15,8 +15,11 @@ export const UI = {
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, 480, 360);
 
-        ctx.drawImage(menuImage, 40, 50, 70, 140);
-        ctx.drawImage(menuImage, 370, 50, 70, 140);
+        // W drawMenu, przed drawImage
+        if (menuImage.complete) {
+            ctx.drawImage(menuImage, 40, 50, 70, 140);
+            ctx.drawImage(menuImage, 370, 50, 70, 140);
+        }
 
         ctx.fillStyle = "white";
         ctx.font = "20px Arial";

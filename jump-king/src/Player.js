@@ -55,8 +55,20 @@ export class Player {
     }
 
     update(input, delta, platforms, slopes) {
-        // Aktualizacja czasu gry
+        // 0. AKTUALIZACJA CZASU I FILTROWANIE WIDOCZNYCH OBIEKTÓW
         this.playTime += delta;
+
+        // Wyliczamy, na którym ekranie (0, 1, 2...) jest gracz
+        // Zakładając, że jeden ekran ma 360px wysokości
+        const currentScreenY = Math.floor(this.y / 360) * 360;
+
+        // Filtrujemy platformy: bierzemy tylko te z obecnego, górnego i dolnego ekranu
+        const activePlatforms = platforms.filter(p => 
+            p.y >= currentScreenY - 360 && p.y <= currentScreenY + 720
+        );
+        const activeSlopes = slopes.filter(s => 
+            Math.min(s.y1, s.y2) >= currentScreenY - 360 && Math.max(s.y1, s.y2) <= currentScreenY + 720
+        );
 
         let wasOnSlope = this.onSlope;
         this.onSlope = false;
@@ -85,7 +97,7 @@ export class Player {
         }
 
         // 2. PORUSZANIE SIĘ NA ZIEMI
-        if (this.onGround && !this.jumpCharging) {
+        if (this.onGround && !this.jumpCharging && !this.onSlope) {
             if (input.left) this.velX -= this.acceleration * delta;
             if (input.right) this.velX += this.acceleration * delta;
 
@@ -98,8 +110,8 @@ export class Player {
             this.velX = Math.max(-this.maxSpeed, Math.min(this.velX, this.maxSpeed));
         }
 
-        // 3. OBSŁUGA ZBOCZY
-        for (let slope of slopes) {
+        // 3. OBSŁUGA ZBOCZY (tylko aktywne)
+        for (let slope of activeSlopes) {
             if (this.checkSlopeCollision(slope)) {
                 this.onSlope = true;
                 this.slopeDir = slope.dir;
@@ -112,12 +124,10 @@ export class Player {
             this.onGround = false;
             this.slideSpeed += this.slideAccel * delta;
             this.slideSpeed = Math.min(this.slideSpeed, this.maxSlideSpeed);
+            
             const diag = this.slideSpeed * 0.707;
             this.velX = this.slopeDir * diag;
             this.velY = diag;
-            this.x += this.velX * delta;
-            this.y += this.velY * delta;
-            return; 
         }
 
         if (wasOnSlope && !this.onSlope) {
@@ -125,25 +135,26 @@ export class Player {
             this.onGround = false;
         }
 
-        // 4. RUCH PIONOWY
+        // 4. RUCH PIONOWY I KOLIZJE Y
         let wasInAir = !this.onGround;
-        this.velY += this.gravity * delta;
         
-        // Ograniczenie prędkości spadania
+        if (!this.onSlope) {
+            this.velY += this.gravity * delta;
+        }
+        
         if (this.velY > this.terminalVelocity) this.velY = this.terminalVelocity;
 
         this.y += this.velY * delta;
         let preCollisionVelY = this.velY;
 
         this.onGround = false;
-        for (let plat of platforms) {
+        for (let plat of activePlatforms) {
             if (this.checkCollision(this, plat)) {
-                if (this.velY > 0) { 
+                if (this.velY > 0) { // Spadanie
                     if (this.y + this.height - this.velY * delta <= plat.y + 10) {
                         this.y = plat.y - this.height;
                         
-                        // Zliczanie upadku przy osiągnięciu max prędkości
-                        if (preCollisionVelY >= this.terminalVelocity) {
+                        if (preCollisionVelY >= 1000) {
                             this.fallCount++;
                         }
 
@@ -151,39 +162,31 @@ export class Player {
                         this.onGround = true;
                         if (wasInAir) this.velX = 0; 
                     }
-                } else if (this.velY < 0) {
+                } else if (this.velY < 0) { // Sufit
                     this.y = plat.y + plat.height;
                     this.velY = 0;
                 }
             }
         }
 
-        // 5. RUCH POZIOMY
+        // 5. RUCH POZIOMY I KOLIZJE X
         this.x += this.velX * delta;
 
-        if (this.x < 0) { 
-            this.x = 0; 
-            this.velX = 0; 
-        }
-        if (this.x + this.width > 480) { 
-            this.x = 480 - this.width; 
-            this.velX = 0;
-        }
+        if (this.x < 0) { this.x = 0; this.velX = 0; }
+        if (this.x + this.width > 480) { this.x = 480 - this.width; this.velX = 0; }
 
-        for (let plat of platforms) {
+        for (let plat of activePlatforms) {
             if (this.checkCollision(this, plat)) {
                 let isStandingOnThis = (Math.abs((this.y + this.height) - plat.y) < 1.1);
                 if (!isStandingOnThis) {
                     if (this.velX > 0) this.x = plat.x - this.width;
                     else if (this.velX < 0) this.x = plat.x + plat.width;
+                    
                     if (!this.onGround) this.velX *= -0.7; 
                     else this.velX = 0;
                 }
             }
         }
-
-        this.x = Math.round(this.x * 100) / 100;
-        this.y = Math.round(this.y * 100) / 100;
     }
 
     performJump() {
@@ -246,7 +249,7 @@ export class Player {
         // Jeśli masz zmienną sprawdzającą czy gracz dotyka ziemi:
         this.onGround = true; 
     }
-    
+
     saveGame() {
         const saveDate = {
             x: this.x,
@@ -259,23 +262,24 @@ export class Player {
     }
 
     loadGame() {
-        const saved = localStorage.getItem("goyJumperSave");
-        if (saved) {
-            const data = JSON.parse(saved);
-            this.x = data.x;
-            this.y = data.y;
-            this.playTime = data.playTime;
-            this.jumpCount = data.jumpCount;
-            this.fallCount = data.fallCount;
-            return true; // Zwraca true, jeśli wczytano zapis
+        try {
+            const saved = localStorage.getItem("goyJumperSave");
+            if (saved) {
+                const data = JSON.parse(saved);
+                // ... przypisanie wartości ...
+                return true;
+            }
+        } catch (e) {
+            console.error("Błąd wczytywania zapisu:", e);
         }
-        return false; // Brak zapisu
+        return false;
     }
 
     draw(ctx) {
         // Postać i pasek ładowania
         ctx.fillStyle = this.jumpCharging ? "#ff7777" : "red";
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        // W draw(ctx)
+        ctx.fillRect(Math.round(this.x), Math.round(this.y), this.width, this.height);
         
         if (this.jumpCharging) {
             ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
