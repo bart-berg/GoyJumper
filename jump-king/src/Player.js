@@ -112,10 +112,24 @@ export class Player {
 
         // 3. OBSŁUGA ZBOCZY (tylko aktywne)
         for (let slope of activeSlopes) {
-            if (this.checkSlopeCollision(slope)) {
-                this.onSlope = true;
-                this.slopeDir = slope.dir;
-                break;
+            if (slope.type === 1) {
+                // Normalny ślizg
+                if (this.checkSlopeCollision(slope)) {
+                    this.onSlope = true;
+                    this.slopeDir = slope.dir;
+                    break;
+                }
+            } else if (slope.type === 0) {
+                // ODBICIE
+                if (this.checkSlopeCollisionTop(slope)) {
+                    this.velX = 0; 
+
+                    if (this.velY < 0) {
+                        this.velY = 0; 
+                    }
+                    
+                    break;
+                }
             }
         }
 
@@ -231,6 +245,24 @@ export class Player {
             this.onGround = true;
         }
         return hit;
+    }
+
+    checkSlopeCollisionTop(slope) {
+        const leftX = this.x;
+        const rightX = this.x + this.width;
+        const headY = this.y; 
+        
+        for (let px of [leftX, rightX]) {
+            if (px < Math.min(slope.x1, slope.x2) || px > Math.max(slope.x1, slope.x2)) continue;
+            
+            const t = (px - slope.x1) / (slope.x2 - slope.x1);
+            const lineY = slope.y1 + t * (slope.y2 - slope.y1);
+
+            if (headY <= lineY + 5 && headY >= lineY - 5) {
+                return true;
+            }
+        }
+        return false;
     }
 
     reset() {

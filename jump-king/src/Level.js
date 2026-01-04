@@ -10,5 +10,8 @@ export const platforms = [
 
 
 export const slopes = [
-  new Line(30, 50, 150, 150),
+  new Line(30, 50, 150, 150, 1), // To będzie śliskie (czerwone)
+  // Oryginał: new Line(200, 50, 300, 150, 0)
+// Po obniżeniu o 40px:
+    new Line(200, 90, 320, 190, 0)
 ];
