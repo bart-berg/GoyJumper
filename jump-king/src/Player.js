@@ -11,11 +11,17 @@ export class Player {
         this.velX = 0;
         this.velY = 0;
 
+        // --- STATYSTYKI I CZAS ---
+        this.jumpCount = 0;
+        this.fallCount = 0;
+        this.playTime = 0; // Czas w sekundach
+
         // --- WARTOŚCI FIZYKI ---
         this.acceleration = 1200; 
         this.maxSpeed = 150;
         this.friction = 2500;
         this.gravity = 2100;
+        this.terminalVelocity = 1000; // Maksymalna prędkość spadania
         
         this.jumpCharge = 0;
         this.maxJumpCharge = 860; 
@@ -33,7 +39,25 @@ export class Player {
         this.slopeDir = 0;
     }
 
+    // Metoda pomocnicza do formatowania czasu
+    formatTime(seconds) {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        const ms = Math.floor((seconds % 1) * 1000);
+
+        const hDisplay = hrs.toString().padStart(2, '0');
+        const mDisplay = mins.toString().padStart(2, '0');
+        const sDisplay = secs.toString().padStart(2, '0');
+        const msDisplay = ms.toString().padStart(3, '0');
+
+        return `${hDisplay}:${mDisplay}:${sDisplay}.${msDisplay}`;
+    }
+
     update(input, delta, platforms, slopes) {
+        // Aktualizacja czasu gry
+        this.playTime += delta;
+
         let wasOnSlope = this.onSlope;
         this.onSlope = false;
 
@@ -101,10 +125,15 @@ export class Player {
             this.onGround = false;
         }
 
-        // 4. RUCH PIONOWY I KOLIZJE GÓRA/DÓŁ
+        // 4. RUCH PIONOWY
         let wasInAir = !this.onGround;
         this.velY += this.gravity * delta;
+        
+        // Ograniczenie prędkości spadania
+        if (this.velY > this.terminalVelocity) this.velY = this.terminalVelocity;
+
         this.y += this.velY * delta;
+        let preCollisionVelY = this.velY;
 
         this.onGround = false;
         for (let plat of platforms) {
@@ -112,6 +141,12 @@ export class Player {
                 if (this.velY > 0) { 
                     if (this.y + this.height - this.velY * delta <= plat.y + 10) {
                         this.y = plat.y - this.height;
+                        
+                        // Zliczanie upadku przy osiągnięciu max prędkości
+                        if (preCollisionVelY >= this.terminalVelocity) {
+                            this.fallCount++;
+                        }
+
                         this.velY = 0;
                         this.onGround = true;
                         if (wasInAir) this.velX = 0; 
@@ -123,10 +158,9 @@ export class Player {
             }
         }
 
-        // 5. RUCH POZIOMY I KOLIZJE
+        // 5. RUCH POZIOMY
         this.x += this.velX * delta;
 
-        // Granice ekranu - TYLKO ZATRZYMANIE
         if (this.x < 0) { 
             this.x = 0; 
             this.velX = 0; 
@@ -136,20 +170,14 @@ export class Player {
             this.velX = 0;
         }
 
-        // Kolizje z platformami - ODBIJANIE (0.7)
         for (let plat of platforms) {
             if (this.checkCollision(this, plat)) {
                 let isStandingOnThis = (Math.abs((this.y + this.height) - plat.y) < 1.1);
-
                 if (!isStandingOnThis) {
                     if (this.velX > 0) this.x = plat.x - this.width;
                     else if (this.velX < 0) this.x = plat.x + plat.width;
-                    
-                    if (!this.onGround) {
-                        this.velX *= -0.7; // Przywrócone Twoje 0.7
-                    } else {
-                        this.velX = 0;
-                    }
+                    if (!this.onGround) this.velX *= -0.7; 
+                    else this.velX = 0;
                 }
             }
         }
@@ -159,15 +187,14 @@ export class Player {
     }
 
     performJump() {
+        this.jumpCount++;
         const chargePct = this.jumpCharge / this.maxJumpCharge;
         this.velY = -this.jumpCharge;
-
         if (this.jumpDirection !== 0) {
             this.velX = this.jumpDirection * (155 + (chargePct * 125)); 
         } else {
             this.velX = 0;
         }
-
         this.jumpCharge = 0;
         this.jumpCharging = false;
         this.onGround = false;
@@ -203,7 +230,25 @@ export class Player {
         return hit;
     }
 
+    reset() {
+        this.x = 240; 
+        this.y = 303;
+        this.velX = 0;
+        this.velY = 0;
+        this.jumpCharge = 0;
+        this.jumpCharging = false;
+        
+        // Ważne: zresetuj też te parametry, jeśli ich używasz
+        this.playTime = 0;
+        this.jumpCount = 0;
+        this.fallCount = 0;
+        
+        // Jeśli masz zmienną sprawdzającą czy gracz dotyka ziemi:
+        this.onGround = true; 
+    }
+
     draw(ctx) {
+        // Postać i pasek ładowania
         ctx.fillStyle = this.jumpCharging ? "#ff7777" : "red";
         ctx.fillRect(this.x, this.y, this.width, this.height);
         

@@ -1,6 +1,7 @@
 import { Player } from "./Player.js";
-import { input, startPressed, consumeStart } from "./input.js";
+import { input, consumeEnter, consumeEscape, consumeUp, consumeDown } from "./input.js";
 import { platforms, slopes } from "./Level.js";
+import { UI } from "./UI.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -12,10 +13,13 @@ const GameState = {
 };
 
 let gameState = GameState.MENU;
-
 let scale, offsetX, offsetY;
+let lastTime = 0;
+let pauseSelection = 0; // 0: RESUME, 1: RESTART, 2: EXIT
 
-function resizeCanvas(){
+const player = new Player(100, 200);
+
+function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
@@ -28,88 +32,86 @@ function resizeCanvas(){
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-const player = new Player(100, 200);
-
-let lastTime = 0;
-
-function gameLoop(time){
+function gameLoop(time) {
   const rawDelta = (time - lastTime) / 1000;
   const delta = Math.min(rawDelta, 0.05);
   lastTime = time;
 
-  if (gameState === GameState.MENU) {
-    drawMenu();
-
-    if (startPressed) {
-        consumeStart();
-        resetGame();
-        gameState = GameState.PLAYING;
-      }
-
-    requestAnimationFrame(gameLoop);
-    return;
+  // --- 1. OBSŁUGA PAUZY (ESCAPE) ---
+  if (input.escape) {
+    consumeEscape();
+    if (gameState === GameState.PLAYING) {
+      gameState = GameState.PAUSED;
+      pauseSelection = 0; // Zawsze zaczynaj od RESUME
+    } else if (gameState === GameState.PAUSED) {
+      gameState = GameState.PLAYING;
+    }
   }
 
-  if (gameState === GameState.PLAYING) {
+  // --- 2. LOGIKA STANÓW ---
+  if (gameState === GameState.MENU) {
+    UI.drawMenu(ctx, canvas, scale, offsetX, offsetY);
+    
+    if (input.enter) {
+      consumeEnter();
+      player.reset();
+      gameState = GameState.PLAYING;
+    }
+  } 
+  else if (gameState === GameState.PAUSED) {
+    // Nawigacja w pauzie
+    if (input.up) {
+      consumeUp();
+      pauseSelection = (pauseSelection - 1 + 3) % 3;
+    }
+    if (input.down) {
+      consumeDown();
+      pauseSelection = (pauseSelection + 1) % 3;
+    }
+
+    // Wybór opcji w pauzie
+    if (input.enter) {
+      consumeEnter();
+      if (pauseSelection === 0) {
+        gameState = GameState.PLAYING; // RESUME
+      } else if (pauseSelection === 1) {
+        player.reset();
+        gameState = GameState.PLAYING; // RESTART
+      } else if (pauseSelection === 2) {
+        gameState = GameState.MENU;    // EXIT
+      }
+    }
+
+    // Rysujemy zamrożoną scenę i nakładkę menu
+    renderGameScene();
+    UI.drawPauseMenu(ctx, player, scale, offsetX, offsetY, pauseSelection);
+  } 
+  else if (gameState === GameState.PLAYING) {
     player.update(input, delta, platforms, slopes);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
-
-    const screenY = Math.floor(player.y / 360);
-    ctx.translate(0, -screenY * 360);
-
-    slopes.forEach(s => s.draw(ctx));
-
-    platforms.forEach(p => p.draw(ctx));
-    player.draw(ctx);
-
-    ctx.restore();
+    renderGameScene();
   }
 
   requestAnimationFrame(gameLoop);
 }
 
-requestAnimationFrame(gameLoop);
-
-function resetGame() {
-  player.x = 240; 
-  player.y = 303;
-  player.velX = 0;
-  player.velY = 0;
-  player.jumpCharge = 0;
-  player.jumpCharging = false;
-}
-
-const menuImage = new Image();
-menuImage.src = "./soy.jpg";
-
-function drawMenu() {
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+// Pomocnicza funkcja rysująca świat gry
+function renderGameScene() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(offsetX, offsetY);
   ctx.scale(scale, scale);
 
-  // Opcjonalnie: tło obszaru gry, żeby widzieć gdzie są granice 480x360
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, 480, 360);
+  // Kamera pionowa (ekrany co 360px)
+  const screenY = Math.floor(player.y / 360);
+  ctx.translate(0, -screenY * 360);
 
-  // Dostosowane pozycje obrazków (rozstawione szerzej na 480px)
-  ctx.drawImage(menuImage, 40, 50, 70, 140);
-  ctx.drawImage(menuImage, 370, 50, 70, 140); // Przesunięte w prawo
-
-  ctx.fillStyle = "white";
-  ctx.font = "20px Arial";
-  ctx.textAlign = "center";
-
-  ctx.fillText("GOY JUMPER", 240, 80); // Środek to 240
-  ctx.fillText("PRESS ENTER", 240, 140);
-  ctx.fillText("TO START", 240, 165);
+  slopes.forEach(s => s.draw(ctx));
+  platforms.forEach(p => p.draw(ctx));
+  player.draw(ctx);
 
   ctx.restore();
+
+  UI.drawHUD(ctx, player, scale, offsetX, offsetY);
 }
+
+requestAnimationFrame(gameLoop);
