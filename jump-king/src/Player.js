@@ -264,7 +264,14 @@ export class Player {
             const saved = localStorage.getItem("goyJumperSave");
             if (saved) {
                 const data = JSON.parse(saved);
-                // ... przypisanie wartości ...
+                
+                this.x = data.x;
+                this.y = data.y;
+                
+                this.playTime = data.playTime || 0;
+                this.jumpCount = data.jumpCount || 0;
+                this.fallCount = data.fallCount || 0;
+
                 return true;
             }
         } catch (e) {
