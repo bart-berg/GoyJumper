@@ -1,6 +1,6 @@
 import { Player } from "./Player.js";
 import { input, consumeEnter, consumeEscape, consumeUp, consumeDown } from "./Input.js";
-import { platforms, slopes } from "./Level.js";
+import { platforms, slopes, npcs } from "./Level.js";
 import { UI } from "./UI.js";
 
 const canvas = document.getElementById("game");
@@ -80,6 +80,8 @@ function gameLoop(time) {
   } 
   else if (gameState === GameState.PLAYING) {
     player.update(input, delta, platforms, slopes);
+    npcs.forEach(n => n.update(delta, player));
+    npcs.forEach(n => n.draw(ctx));
     renderGameScene();
   }
 
@@ -97,6 +99,7 @@ function renderGameScene() {
 
   slopes.forEach(s => s.draw(ctx));
   platforms.forEach(p => p.draw(ctx));
+  npcs.forEach(n => n.draw(ctx));
   player.draw(ctx);
 
   ctx.restore();
