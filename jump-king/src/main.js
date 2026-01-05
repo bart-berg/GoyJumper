@@ -1,5 +1,5 @@
 import { Player } from "./Player.js";
-import { input, consumeEnter, consumeEscape, consumeUp, consumeDown } from "./input.js";
+import { input, consumeEnter, consumeEscape, consumeUp, consumeDown } from "./Input.js";
 import { platforms, slopes } from "./Level.js";
 import { UI } from "./UI.js";
 
