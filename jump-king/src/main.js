@@ -17,7 +17,7 @@ let scale, offsetX, offsetY;
 let lastTime = 0;
 let pauseSelection = 0; 
 
-const player = new Player(240, 303);
+const player = new Player(220, -2200);
 player.loadGame(); // Wczytuje zapis przy starcie/odświeżeniu
 
 function resizeCanvas() {

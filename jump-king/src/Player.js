@@ -266,8 +266,8 @@ export class Player {
     }
 
     reset() {
-        this.x = 240; 
-        this.y = 303;
+        this.x = 220; 
+        this.y = -2200;
         this.velX = 0;
         this.velY = 0;
         this.jumpCharge = 0;

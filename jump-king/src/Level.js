@@ -206,9 +206,9 @@ export const platforms = [
 export const slopes = [
 
   // ===== Limbo 6 ( y = -1440 -> -1800 ) =====
-  new Line(135, -1605, 90, -1560),
+  new Line(135, -1605, 90, -1560,1),
 
-  new Line(140, -1595, 95, -1550),
+  new Line(140, -1595, 95, -1550,0),
 ];
 
 export const npcs = [
