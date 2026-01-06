@@ -19,7 +19,7 @@ export const UI = {
         }
 
         ctx.fillStyle = "white";
-        ctx.font = "20px Arial";
+        ctx.font = "20px PixelGosub";
         ctx.textAlign = "center";
 
         ctx.fillText("GOY JUMPER", 240, 80);
@@ -43,12 +43,12 @@ export const UI = {
         this.drawBox(ctx, 270, 40, 185, 120);
 
         ctx.fillStyle = "white";
-        ctx.font = "bold 13px 'Courier New', monospace";
+        ctx.font = "20px PixelGosub";
         ctx.textAlign = "left";
         ctx.fillText("NEW GAME", 45, 65);
 
         // Statystyki
-        ctx.font = "11px 'Courier New', monospace";
+        ctx.font = "20px PixelGosub";
         ctx.fillText(`TIME : ${player.formatTime(player.playTime)}`, 45, 90);
         ctx.fillText(`JUMPS : ${player.jumpCount}`, 45, 115);
         ctx.fillText(`FALLS : ${player.fallCount}`, 45, 140);
@@ -73,7 +73,7 @@ export const UI = {
         ctx.scale(scale, scale);
 
         ctx.fillStyle = "white";
-        ctx.font = "14px monospace";
+        ctx.font = "20px PixelGosub";
         ctx.textAlign = "left";
         ctx.fillText(player.formatTime(player.playTime), 10, 20);
 
