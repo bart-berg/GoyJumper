@@ -19,27 +19,35 @@ export class Line {
     ctx.stroke();
 
     // 2. Jeśli isTriangle jest true, rysujemy wypełnienie
-    if (this.isTriangle) {
-        ctx.fillStyle = this.type === 0 ? "orange" : "red";
-        ctx.beginPath();
-        ctx.moveTo(this.x1, this.y1);
-        ctx.lineTo(this.x2, this.y2);
+if (this.isTriangle) {
+    ctx.fillStyle = this.type === 0 ? "orange" : "red";
+    ctx.beginPath();
 
-        if (this.type === 1) {
-            // Wypełnienie w dół (dla podłogi)
-            // Znajdujemy niższy punkt Y, żeby wiedzieć jak głęboko rysować "podstawę"
-            const maxY = Math.max(this.y1, this.y2) + 20; 
-            ctx.lineTo(this.x2, maxY);
-            ctx.lineTo(this.x1, maxY);
-        } else {
-            // Wypełnienie w górę (dla sufitu/odbicia)
-            const minY = Math.min(this.y1, this.y2) - 20;
-            ctx.lineTo(this.x2, minY);
-            ctx.lineTo(this.x1, minY);
-        }
+    // Przeciwprostokątna
+    ctx.moveTo(this.x1, this.y1);
+    ctx.lineTo(this.x2, this.y2);
 
-        ctx.closePath();
-        ctx.fill();
+    // Normalizacja punktów
+    const top =
+        this.y1 < this.y2
+            ? { x: this.x1, y: this.y1 }
+            : { x: this.x2, y: this.y2 };
+
+    const bottom =
+        this.y1 > this.y2
+            ? { x: this.x1, y: this.y1 }
+            : { x: this.x2, y: this.y2 };
+
+    if (this.type === 1) {
+        // 🔺 SLIDE — podstawa NA DOLE
+        ctx.lineTo(top.x, bottom.y);
+    } else {
+        // 🔻 BOUNCE — podstawa NA GÓRZE
+        ctx.lineTo(bottom.x, top.y);
     }
+
+    ctx.closePath();
+    ctx.fill();
+}
   }
 }

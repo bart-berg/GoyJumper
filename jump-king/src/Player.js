@@ -4,10 +4,8 @@ export class Player {
         this.startY = y;
         this.x = x;
         this.y = y;
-
         this.width = 14; 
         this.height = 22; 
-        
         this.velX = 0;
         this.velY = 0;
 
@@ -21,7 +19,7 @@ export class Player {
         this.maxSpeed = 150;
         this.friction = 2500;
         this.gravity = 2100;
-        this.terminalVelocity = 650; 
+        this.terminalVelocity = 750; 
         
         this.jumpCharge = 0;
         this.maxJumpCharge = 860; 
@@ -35,9 +33,10 @@ export class Player {
         // --- SKOSY ---
         this.onSlope = false;
         this.slideSpeed = 0;
-        this.maxSlideSpeed = 500;
-        this.slideAccel = 1300;
-        this.slopeDir = 0;
+        this.currentSlope = null; 
+
+        // --- FLAGI ---
+        this.canMoveOnPlatform = true;
     }
 
     formatTime(seconds) {
@@ -51,60 +50,58 @@ export class Player {
     update(input, delta, platforms, slopes) {
         this.playTime += delta;
 
+        // --- OPTYMALIZACJA: Szybsze filtrowanie ---
         const currentScreenY = Math.floor(this.y / 360) * 360;
         const activePlatforms = platforms.filter(p => 
             p.y >= currentScreenY - 360 && p.y <= currentScreenY + 720
         );
         const activeSlopes = slopes.filter(s => 
-            Math.min(s.y1, s.y2) >= currentScreenY - 360 && Math.max(s.y1, s.y2) <= currentScreenY + 720
+            Math.max(s.y1, s.y2) >= currentScreenY - 360 && Math.min(s.y1, s.y2) <= currentScreenY + 720
         );
 
         let wasOnSlope = this.onSlope;
-        
-        // --- 1. OBSŁUGA ZBOCZY (PRIORYTET) ---
-        // Kluczowa zmiana: Skos aktywuje się tylko jeśli nie stoimy stabilnie na platformie (!this.onGround)
-        // ALBO jeśli już na nim jesteśmy (kontynuacja zjazdu).
         this.onSlope = false;
-        for (let slope of activeSlopes) {
-            if (slope.type === 1) {
-                // Sprawdzamy kolizję ze skosem
-                let colliding = this.checkSlopeCollision(slope);
-                
-                if (colliding) {
-                    // Jeśli już zjeżdżamy - kontynuuj. 
-                    // Jeśli stoimy na ziemi - aktywuj zjazd tylko gdy środek ciężkości (lub cała postać) spadnie.
-                    if (wasOnSlope || !this.onGround) {
-                        this.onSlope = true;
-                        this.slopeDir = slope.dir;
-                        break;
+        this.currentSlope = null;
+
+        // --- 1. WYKRYWANIE SKOSU ---
+        for (let i = 0; i < activeSlopes.length; i++) {
+            const slope = activeSlopes[i];
+            if (slope.type === 1 && this.checkSlopeCollision(slope)) {
+                if (wasOnSlope || !this.onGround || this.velY > 0) {
+                    this.onSlope = true;
+                    this.currentSlope = slope;
+                    if (!wasOnSlope) {
+                        this.slideSpeed = Math.max(150, Math.sqrt(this.velX * this.velX + this.velY * this.velY) * 0.8);
                     }
+                    break;
                 }
             } else if (slope.type === 0) {
-                if (this.checkSlopeCollisionTop(slope)) {
+                const collisionY = this.getSlopeYAtPlayerTop(slope);
+                if (collisionY !== null && this.y <= collisionY && this.y >= collisionY - 15 && this.velY < 0) {
+                    this.velY = Math.abs(this.velY) * 0.5; 
                     this.velX = 0; 
-                    if (this.velY < 0) this.velY = 0; 
+                    this.y = collisionY + 1; 
                     break;
                 }
             }
         }
 
         // --- 2. LOGIKA ŚLIZGU ---
-        if (this.onSlope) {
+        if (this.onSlope && this.currentSlope) {
             this.jumpCharging = false;
             this.onGround = false;
-            this.slideSpeed += this.slideAccel * delta;
-            this.slideSpeed = Math.min(this.slideSpeed, this.maxSlideSpeed);
-            
-            const diag = this.slideSpeed * 0.707;
-            this.velX = this.slopeDir * diag;
-            this.velY = diag;
-        }
-
-        if (wasOnSlope && !this.onSlope) {
+            let dx = this.currentSlope.x2 - this.currentSlope.x1;
+            let dy = this.currentSlope.y2 - this.currentSlope.y1;
+            if (dy < 0) { dx = -dx; dy = -dy; }
+            const angle = Math.atan2(dy, dx); 
+            this.slideSpeed = Math.min(this.terminalVelocity, this.slideSpeed + (this.gravity * Math.abs(Math.sin(angle))) * delta);
+            this.velX = Math.cos(angle) * this.slideSpeed; 
+            this.velY = Math.sin(angle) * this.slideSpeed;
+        } else {
             this.slideSpeed = 0;
         }
 
-        // --- 3. ŁADOWANIE SKOKU I RUCH POZIOMY ---
+        // --- 3. ŁADOWANIE I RUCH ---
         if (!this.onSlope) {
             if (input.jump && this.onGround) {
                 if (!this.jumpCharging) {
@@ -112,23 +109,16 @@ export class Player {
                     this.velX = 0;
                     this.jumpCharge = this.minJumpCharge;
                 }
-                this.jumpCharge += this.chargeSpeed * delta;
-                if (input.left) this.jumpDirection = -1;
-                else if (input.right) this.jumpDirection = 1;
-                else this.jumpDirection = 0;
-
-                if (this.jumpCharge > this.maxJumpCharge) {
-                    this.jumpCharge = this.maxJumpCharge;
-                    this.performJump();
-                }
+                this.jumpCharge = Math.min(this.maxJumpCharge, this.jumpCharge + this.chargeSpeed * delta);
+                this.jumpDirection = input.left ? -1 : (input.right ? 1 : 0);
+                if (this.jumpCharge >= this.maxJumpCharge) this.performJump();
             } else if (!input.jump && this.jumpCharging) {
                 this.performJump();
             }
 
-            if (this.onGround && !this.jumpCharging) {
+            if (this.onGround && !this.jumpCharging && this.canMoveOnPlatform) {
                 if (input.left) this.velX -= this.acceleration * delta;
                 if (input.right) this.velX += this.acceleration * delta;
-
                 if (!input.left && !input.right) {
                     if (this.velX > 0) this.velX = Math.max(0, this.velX - this.friction * delta);
                     else if (this.velX < 0) this.velX = Math.min(0, this.velX + this.friction * delta);
@@ -137,31 +127,30 @@ export class Player {
             }
         }
 
-        // --- 4. RUCH PIONOWY I KOLIZJE Y ---
-        let wasInAir = !this.onGround;
+        // --- 4. GRAWITACJA I RUCH PIONOWY ---
         if (!this.onSlope) {
-            this.velY += this.gravity * delta;
-        }
-        if (this.velY > this.terminalVelocity) this.velY = this.terminalVelocity;
-
-        this.y += this.velY * delta;
-        let preCollisionVelY = this.velY;
-
-        if (!this.onSlope) { 
+            this.velY = Math.min(this.terminalVelocity, this.velY + this.gravity * delta);
+            this.y += this.velY * delta;
+            let preColY = this.velY;
+            let wasGroundBefore = this.onGround;
             this.onGround = false;
-            for (let plat of activePlatforms) {
+            this.canMoveOnPlatform = true;
+
+            for (let i = 0; i < activePlatforms.length; i++) {
+                const plat = activePlatforms[i];
                 if (this.checkCollision(this, plat)) {
                     if (this.velY > 0) { 
                         if (this.y + this.height - this.velY * delta <= plat.y + 10) {
                             this.y = plat.y - this.height;
-                            if (preCollisionVelY >= 1000) this.fallCount++;
+                            if (preColY >= 1000) this.fallCount++;
                             this.velY = 0;
                             this.onGround = true;
-                            if (wasInAir) this.velX = 0; 
+                            if (plat.canMove === false) { this.canMoveOnPlatform = false; this.velX = 0; }
+                            if (!wasGroundBefore) this.velX = 0;
                         }
                     } else if (this.velY < 0) {
                         this.y = plat.y + plat.height;
-                        this.velY = 0;
+                        this.velY = Math.abs(this.velY) * 0.5;
                     }
                 }
             }
@@ -169,20 +158,16 @@ export class Player {
 
         // --- 5. RUCH POZIOMY I KOLIZJE X ---
         this.x += this.velX * delta;
-
         if (this.x < 0) { this.x = 0; this.velX = 0; }
         if (this.x + this.width > 480) { this.x = 480 - this.width; this.velX = 0; }
 
         if (!this.onSlope) {
-            for (let plat of activePlatforms) {
+            for (let i = 0; i < activePlatforms.length; i++) {
+                const plat = activePlatforms[i];
                 if (this.checkCollision(this, plat)) {
-                    let isStandingOnThis = (Math.abs((this.y + this.height) - plat.y) < 2.0);
-                    if (!isStandingOnThis) {
-                        if (this.velX > 0) this.x = plat.x - this.width;
-                        else if (this.velX < 0) this.x = plat.x + plat.width;
-                        
-                        if (!this.onGround) this.velX *= -0.7; 
-                        else this.velX = 0;
+                    if (Math.abs((this.y + this.height) - plat.y) >= 2.0) {
+                        this.x = (this.velX > 0) ? plat.x - this.width : plat.x + plat.width;
+                        if (!this.onGround) this.velX *= -0.6; else this.velX = 0;
                     }
                 }
             }
@@ -193,67 +178,39 @@ export class Player {
         this.jumpCount++;
         const chargePct = this.jumpCharge / this.maxJumpCharge;
         this.velY = -this.jumpCharge;
-        if (this.jumpDirection !== 0) {
-            this.velX = this.jumpDirection * (155 + (chargePct * 125)); 
-        } else {
-            this.velX = 0;
-        }
+        this.velX = this.jumpDirection !== 0 ? this.jumpDirection * (155 + (chargePct * 125)) : 0;
         this.jumpCharge = 0;
         this.jumpCharging = false;
         this.onGround = false;
         this.jumpDirection = 0;
     }
 
-    checkCollision(rect1, rect2) {
-        return rect1.x < rect2.x + rect2.width &&
-               rect1.x + rect1.width > rect2.x &&
-               rect1.y < rect2.y + rect2.height &&
-               rect1.y + rect1.height > rect2.y;
+    checkCollision(r1, r2) {
+        return r1.x < r2.x + r2.width && r1.x + r1.width > r2.x && r1.y < r2.y + r2.height && r1.y + r1.height > r2.y;
+    }
+
+    getSlopeYAtPlayerTop(slope) {
+        const xL = this.x, xR = this.x + this.width;
+        const minX = Math.min(slope.x1, slope.x2), maxX = Math.max(slope.x1, slope.x2);
+        const getVal = (x) => slope.y1 + ((x - slope.x1) / (slope.x2 - slope.x1)) * (slope.y2 - slope.y1);
+        let yL = (xL >= minX && xL <= maxX) ? getVal(xL) : null;
+        let yR = (xR >= minX && xR <= maxX) ? getVal(xR) : null;
+        return (yL !== null && yR !== null) ? Math.max(yL, yR) : (yL ?? yR);
     }
 
     checkSlopeCollision(slope) {
-        const leftX = this.x;
-        const rightX = this.x + this.width;
-        const feetY = this.y + this.height;
-        const minS = Math.min(slope.x1, slope.x2);
-        const maxS = Math.max(slope.x1, slope.x2);
-
-        // Odwrócona logika krawędzi (zgodnie z poprzednią poprawką)
-        if (slope.dir === 1) { 
-            if (leftX > maxS || rightX < minS) return false;
-        } else { 
-            if (rightX < minS || leftX > maxS) return false;
-        }
-
-        const dx = slope.x2 - slope.x1;
-        const dy = slope.y2 - slope.y1;
-
-        const checkX = slope.dir === 1 ? Math.max(minS, leftX) : Math.min(maxS, rightX);
-        const t = (checkX - slope.x1) / dx;
-        const lineY = slope.y1 + t * dy;
-
-        if (feetY >= lineY - 10 && feetY <= lineY + 20 && this.velY >= 0) {
+        const checkX = (slope.dir === 1) ? this.x : this.x + this.width;
+        if (checkX < Math.min(slope.x1, slope.x2) || checkX > Math.max(slope.x1, slope.x2)) return false;
+        const lineY = slope.y1 + ((checkX - slope.x1) / (slope.x2 - slope.x1)) * (slope.y2 - slope.y1);
+        if (this.y + this.height >= lineY && this.y + this.height <= lineY + 30) {
             this.y = lineY - this.height;
             return true;
         }
         return false;
     }
 
-    checkSlopeCollisionTop(slope) {
-        const leftX = this.x;
-        const rightX = this.x + this.width;
-        const headY = this.y; 
-        for (let px of [leftX, rightX]) {
-            if (px < Math.min(slope.x1, slope.x2) || px > Math.max(slope.x1, slope.x2)) continue;
-            const t = (px - slope.x1) / (slope.x2 - slope.x1);
-            const lineY = slope.y1 + t * (slope.y2 - slope.y1);
-            if (headY <= lineY + 5 && headY >= lineY - 5 && this.velY < 0) return true;
-        }
-        return false;
-    }
-
     reset() {
-        this.x = 150; this.y = -4000;
+        this.x = 150; this.y = -5000;
         this.velX = 0; this.velY = 0;
         this.jumpCharge = 0; this.jumpCharging = false;
         this.playTime = 0; this.jumpCount = 0; this.fallCount = 0;
@@ -261,22 +218,12 @@ export class Player {
     }
 
     saveGame() {
-        const saveDate = { x: this.x, y: this.y, playTime: this.playTime, jumpCount: this.jumpCount, fallCount: this.fallCount };
-        localStorage.setItem("goyJumperSave", JSON.stringify(saveDate));
+        localStorage.setItem("goyJumperSave", JSON.stringify({ x: this.x, y: this.y, playTime: this.playTime, jumpCount: this.jumpCount, fallCount: this.fallCount }));
     }
 
     loadGame() {
-        try {
-            const saved = localStorage.getItem("goyJumperSave");
-            if (saved) {
-                const data = JSON.parse(saved);
-                this.x = data.x; this.y = data.y;
-                this.playTime = data.playTime || 0;
-                this.jumpCount = data.jumpCount || 0;
-                this.fallCount = data.fallCount || 0;
-                return true;
-            }
-        } catch (e) { console.error("Błąd wczytywania zapisu:", e); }
+        const saved = localStorage.getItem("goyJumperSave");
+        if (saved) { Object.assign(this, JSON.parse(saved)); return true; }
         return false;
     }
 

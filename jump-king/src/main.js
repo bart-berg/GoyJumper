@@ -3,6 +3,13 @@ import { input, consumeEnter, consumeEscape, consumeUp, consumeDown } from "./In
 import { platforms, slopes, npcs } from "./Level.js";
 import { UI } from "./UI.js";
 
+//Debug
+//---------------------------------------------------------------
+const DEBUG = true;
+let mouseX = 0;
+let mouseY = 0;
+//---------------------------------------------------------------
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -104,6 +111,34 @@ function renderGameScene() {
 
   ctx.restore();
   UI.drawHUD(ctx, player, scale, offsetX, offsetY);
+
+  //Debug
+  //---------------------------------------------------------------
+  if (DEBUG) {
+  ctx.save();
+  ctx.fillStyle = "lime";
+  ctx.font = "12px monospace";
+  ctx.fillText(`X: ${mouseX}  Y: ${mouseY}`, 10, 340);
+  ctx.restore();
 }
+  //---------------------------------------------------------------
+}
+
+//Debug
+//---------------------------------------------------------------
+canvas.addEventListener("mousemove", (e) => {
+  if (!DEBUG) return;
+
+  const rect = canvas.getBoundingClientRect();
+
+  const screenX = (e.clientX - rect.left - offsetX) / scale;
+  const screenY = (e.clientY - rect.top - offsetY) / scale;
+
+  const screenIndex = Math.floor(player.y / 360);
+
+  mouseX = Math.floor(screenX);
+  mouseY = Math.floor(screenY + screenIndex * 360);
+});
+//---------------------------------------------------------------
 
 requestAnimationFrame(gameLoop);
