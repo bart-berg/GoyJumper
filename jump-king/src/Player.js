@@ -14,7 +14,7 @@ export class Player {
         this.fallCount = 0;
         this.playTime = 0; 
 
-        // --- WARTOŚCI FIZYKI ---
+        // --- WARTOŚCI FIZYKI (DOKŁADNIE TWOJE) ---
         this.acceleration = 1200; 
         this.maxSpeed = 150;
         this.friction = 2500;
@@ -50,7 +50,7 @@ export class Player {
     update(input, delta, platforms, slopes) {
         this.playTime += delta;
 
-        // --- OPTYMALIZACJA: Szybsze filtrowanie ---
+        // Filtrowanie (bezpieczne dla wydajności)
         const currentScreenY = Math.floor(this.y / 360) * 360;
         const activePlatforms = platforms.filter(p => 
             p.y >= currentScreenY - 360 && p.y <= currentScreenY + 720
@@ -63,7 +63,7 @@ export class Player {
         this.onSlope = false;
         this.currentSlope = null;
 
-        // --- 1. WYKRYWANIE SKOSU ---
+        // --- 1. WYKRYWANIE SKOSU (TWOJA LOGIKA) ---
         for (let i = 0; i < activeSlopes.length; i++) {
             const slope = activeSlopes[i];
             if (slope.type === 1 && this.checkSlopeCollision(slope)) {
@@ -86,7 +86,7 @@ export class Player {
             }
         }
 
-        // --- 2. LOGIKA ŚLIZGU ---
+        // --- 2. FIZYKA SKOSU LUB RUCHU ---
         if (this.onSlope && this.currentSlope) {
             this.jumpCharging = false;
             this.onGround = false;
@@ -99,10 +99,10 @@ export class Player {
             this.velY = Math.sin(angle) * this.slideSpeed;
         } else {
             this.slideSpeed = 0;
-        }
+            // Grawitacja
+            this.velY = Math.min(this.terminalVelocity, this.velY + this.gravity * delta);
 
-        // --- 3. ŁADOWANIE I RUCH ---
-        if (!this.onSlope) {
+            // Sterowanie i ładowanie skoku (TWOJA LOGIKA)
             if (input.jump && this.onGround) {
                 if (!this.jumpCharging) {
                     this.jumpCharging = true;
@@ -127,9 +127,10 @@ export class Player {
             }
         }
 
-        // --- 4. GRAWITACJA I RUCH PIONOWY ---
+        // --- 3. ROZWIĄZANIE KOLIZJI (NAPRAWA CLIPPINGU) ---
         if (!this.onSlope) {
-            this.velY = Math.min(this.terminalVelocity, this.velY + this.gravity * delta);
+            // A. Najpierw ruch i kolizja w pionie (Y)
+            const oldY = this.y;
             this.y += this.velY * delta;
             let preColY = this.velY;
             let wasGroundBefore = this.onGround;
@@ -139,38 +140,48 @@ export class Player {
             for (let i = 0; i < activePlatforms.length; i++) {
                 const plat = activePlatforms[i];
                 if (this.checkCollision(this, plat)) {
-                    if (this.velY > 0) { 
-                        if (this.y + this.height - this.velY * delta <= plat.y + 10) {
-                            this.y = plat.y - this.height;
-                            if (preColY >= 1000) this.fallCount++;
-                            this.velY = 0;
-                            this.onGround = true;
-                            if (plat.canMove === false) { this.canMoveOnPlatform = false; this.velX = 0; }
-                            if (!wasGroundBefore) this.velX = 0;
-                        }
-                    } else if (this.velY < 0) {
+                    if (this.velY > 0 && oldY + this.height <= plat.y + 10) { 
+                        // Lądowanie od góry
+                        this.y = plat.y - this.height;
+                        if (preColY >= 1000) this.fallCount++;
+                        this.velY = 0;
+                        this.onGround = true;
+                        if (plat.canMove === false) { this.canMoveOnPlatform = false; this.velX = 0; }
+                        if (!wasGroundBefore) this.velX = 0;
+                    } else if (this.velY < 0 && oldY >= plat.y + plat.height) {
+                        // Uderzenie głową
                         this.y = plat.y + plat.height;
                         this.velY = Math.abs(this.velY) * 0.5;
                     }
                 }
             }
-        }
 
-        // --- 5. RUCH POZIOMY I KOLIZJE X ---
-        this.x += this.velX * delta;
-        if (this.x < 0) { this.x = 0; this.velX = 0; }
-        if (this.x + this.width > 480) { this.x = 480 - this.width; this.velX = 0; }
+            // B. Potem ruch i kolizja w poziomie (X)
+            const oldX = this.x;
+            this.x += this.velX * delta;
+            
+            // Granice mapy
+            if (this.x < 0) { this.x = 0; this.velX = 0; }
+            if (this.x + this.width > 480) { this.x = 480 - this.width; this.velX = 0; }
 
-        if (!this.onSlope) {
             for (let i = 0; i < activePlatforms.length; i++) {
                 const plat = activePlatforms[i];
                 if (this.checkCollision(this, plat)) {
-                    if (Math.abs((this.y + this.height) - plat.y) >= 2.0) {
+                    // Sprawdzamy, czy to faktycznie kolizja boczna (nie jesteśmy na platformie)
+                    if (this.y + this.height > plat.y + 2 && this.y < plat.y + plat.height - 2) {
                         this.x = (this.velX > 0) ? plat.x - this.width : plat.x + plat.width;
-                        if (!this.onGround) this.velX *= -0.6; else this.velX = 0;
+                        if (!this.onGround) {
+                            this.velX *= -0.6; // Odbicie
+                        } else {
+                            this.velX = 0;
+                        }
                     }
                 }
             }
+        } else {
+            // Jeśli na skosie, po prostu wykonaj ruch (fizyka skosu już go wyliczyła)
+            this.y += this.velY * delta;
+            this.x += this.velX * delta;
         }
     }
 
@@ -210,7 +221,7 @@ export class Player {
     }
 
     reset() {
-        this.x = 150; this.y = -5000;
+        this.x = 100; this.y = -5265;
         this.velX = 0; this.velY = 0;
         this.jumpCharge = 0; this.jumpCharging = false;
         this.playTime = 0; this.jumpCount = 0; this.fallCount = 0;
