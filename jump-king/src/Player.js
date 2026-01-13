@@ -54,6 +54,11 @@ export class Player {
 
         // Filtrowanie (bezpieczne dla wydajności)
         const currentScreenY = Math.floor(this.y / 360) * 360;
+
+        //zaczyna sie od -0
+        const currentScreen = currentScreenY / 360 * -1;
+        console.log(currentScreen);
+
         const activePlatforms = platforms.filter(p =>
             p.y >= currentScreenY - 360 && p.y <= currentScreenY + 720
         );
@@ -190,7 +195,7 @@ export class Player {
                         // Obsługa lodu
                         if (plat.isIce) this.isIce = true;
 
-                        console.log(preColY);
+                        
 
                         if (plat.canMove === false) { this.canMoveOnPlatform = false; this.velX = 0; }
                         if (!wasGroundBefore && !this.isIce) this.velX = 0;
