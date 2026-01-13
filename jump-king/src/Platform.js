@@ -30,7 +30,7 @@ export class Platform {
         const isEven = (jumpCount || 0) % 2 === 0;
         const isActive = (this.phase === 0) || (this.phase === 1 && !isEven) || (this.phase === 2 && isEven);
         ctx.globalAlpha = isActive ? 1.0 : 0.2; // Nieaktywne są półprzezroczyste
-        console.log(isEven);
+        
 
         ctx.fillRect(this.x, this.y, this.width, this.height);
 

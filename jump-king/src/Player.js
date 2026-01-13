@@ -134,7 +134,7 @@ export class Player {
 
                 // 1. USTALENIE MNOŻNIKÓW DLA LODU
                 // Na lodzie przyspieszamy wolniej
-                let accelMultiplier = this.isIce ? 0.50 : 1.0;
+                let accelMultiplier = this.isIce ? 0.30 : 1.0;
                 // Na lodzie limit prędkości jest większy
                 let currentMaxSpeed = this.isIce ? this.maxSpeed * 1.25 : this.maxSpeed;
 
@@ -145,7 +145,7 @@ export class Player {
                 // 3. TARCIE / HAMOWANIE
                 if (!input.left && !input.right) {
                     // Hamowanie na lodzie jest o wiele słabsze niż normalnie (2500)
-                    let f = this.isIce ? 300 : 2500;
+                    let f = this.isIce ? 250 : 2500;
 
                     if (this.velX > 0) this.velX = Math.max(0, this.velX - f * delta);
                     else if (this.velX < 0) this.velX = Math.min(0, this.velX + f * delta);
@@ -181,6 +181,7 @@ export class Player {
                 if (this.checkCollision(this, plat)) {
                     if (this.velY > 0 && oldY + this.height <= plat.y + 10) {
                         // Lądowanie od góry
+
                         this.y = plat.y - this.height;
                         if (preColY >= 1000) this.fallCount++;
                         this.velY = 0;
@@ -188,6 +189,8 @@ export class Player {
 
                         // Obsługa lodu
                         if (plat.isIce) this.isIce = true;
+
+                        console.log(preColY);
 
                         if (plat.canMove === false) { this.canMoveOnPlatform = false; this.velX = 0; }
                         if (!wasGroundBefore && !this.isIce) this.velX = 0;
@@ -234,10 +237,26 @@ export class Player {
     }
 
     performJump() {
+
         this.jumpCount++;
         const chargePct = this.jumpCharge / this.maxJumpCharge;
+        const jumpPower = 155 + (chargePct * 125);
         this.velY = -this.jumpCharge;
-        this.velX = this.jumpDirection !== 0 ? this.jumpDirection * (155 + (chargePct * 125)) : 0;
+
+        // Logika prędkości poziomej przy skoku (ogólnie chodzi o to że zachwujesz predkosć jak skoczysz w gore na lodzie i możesz robić kontry)
+        if (this.jumpDirection !== 0) {
+            if (this.isIce) {
+                // Obliczamy nową prędkość: siła skoku w danym kierunku + obecna prędkość
+                // Jeśli velX ma przeciwny znak niż jumpDirection, wynik naturalnie się zmniejszy
+                this.velX = (this.jumpDirection * jumpPower) + (this.velX * 0.8);
+            } else {
+                // Na zwykłym podłożu zachowujemy stary, responsywny skok
+                this.velX = this.jumpDirection * jumpPower;
+            }
+        } else {
+            // Skok prosto w górę - zachowujemy pęd (bez zmian)
+            this.velX = this.velX;
+        }
         this.jumpCharge = 0;
         this.jumpCharging = false;
         this.onGround = false;
