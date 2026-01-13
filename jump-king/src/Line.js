@@ -1,5 +1,5 @@
 export class Line {
-  constructor(x1, y1, x2, y2, type = 1, isTriangle = false) { 
+  constructor(x1, y1, x2, y2, type = 1, isTriangle = false, isIce = false, phase = 0) { 
     this.x1 = x1;
     this.y1 = y1;
     this.x2 = x2;
@@ -7,6 +7,9 @@ export class Line {
     this.type = type;       // 0: Bounce (sufit), 1: Slide (podłoga)
     this.isTriangle = isTriangle; // Czy rysować wypełnienie
     this.dir = x2 > x1 ? 1 : -1;
+
+    this.isIce = isIce;
+    this.phase = phase; // 0 - zawsze aktywna, 1 - nieparzyste, 2 - parzyste
   }
 
   draw(ctx) {

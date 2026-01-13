@@ -95,17 +95,26 @@ function gameLoop(time) {
   requestAnimationFrame(gameLoop);
 }
 
-function renderGameScene() {
+  function renderGameScene() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  //Wypełnienie całego tła na czarno
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
   ctx.save();
   ctx.translate(offsetX, offsetY);
   ctx.scale(scale, scale);
+
+  //wypełnienie środka canvasa
+  ctx.fillStyle = "#3f1313";
+  ctx.fillRect(0, 0, 480, 360);
 
   const screenY = Math.floor(player.y / 360);
   ctx.translate(0, -screenY * 360);
 
   slopes.forEach(s => s.draw(ctx));
-  platforms.forEach(p => p.draw(ctx));
+  platforms.forEach(p => p.draw(ctx, player.jumpCount));
   npcs.forEach(n => n.draw(ctx));
   player.draw(ctx);
 

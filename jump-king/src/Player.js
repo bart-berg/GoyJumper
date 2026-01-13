@@ -4,28 +4,28 @@ export class Player {
         this.startY = y;
         this.x = x;
         this.y = y;
-        this.width = 14; 
-        this.height = 22; 
+        this.width = 14;
+        this.height = 22;
         this.velX = 0;
         this.velY = 0;
 
         // --- STATYSTYKI I CZAS ---
         this.jumpCount = 0;
         this.fallCount = 0;
-        this.playTime = 0; 
+        this.playTime = 0;
 
         // --- WARTOŚCI FIZYKI (DOKŁADNIE TWOJE) ---
-        this.acceleration = 1200; 
+        this.acceleration = 1200;
         this.maxSpeed = 150;
         this.friction = 2500;
         this.gravity = 2100;
-        this.terminalVelocity = 750; 
-        
+        this.terminalVelocity = 750;
+
         this.jumpCharge = 0;
-        this.maxJumpCharge = 860; 
-        this.minJumpCharge = 100; 
+        this.maxJumpCharge = 860;
+        this.minJumpCharge = 100;
         this.chargeSpeed = 1200;
-        
+
         this.jumpCharging = false;
         this.onGround = false;
         this.jumpDirection = 0;
@@ -33,10 +33,11 @@ export class Player {
         // --- SKOSY ---
         this.onSlope = false;
         this.slideSpeed = 0;
-        this.currentSlope = null; 
+        this.currentSlope = null;
 
         // --- FLAGI ---
         this.canMoveOnPlatform = true;
+        this.isIce = false;
     }
 
     formatTime(seconds) {
@@ -50,12 +51,13 @@ export class Player {
     update(input, delta, platforms, slopes) {
         this.playTime += delta;
 
+
         // Filtrowanie (bezpieczne dla wydajności)
         const currentScreenY = Math.floor(this.y / 360) * 360;
-        const activePlatforms = platforms.filter(p => 
+        const activePlatforms = platforms.filter(p =>
             p.y >= currentScreenY - 360 && p.y <= currentScreenY + 720
         );
-        const activeSlopes = slopes.filter(s => 
+        const activeSlopes = slopes.filter(s =>
             Math.max(s.y1, s.y2) >= currentScreenY - 360 && Math.min(s.y1, s.y2) <= currentScreenY + 720
         );
 
@@ -78,9 +80,9 @@ export class Player {
             } else if (slope.type === 0) {
                 const collisionY = this.getSlopeYAtPlayerTop(slope);
                 if (collisionY !== null && this.y <= collisionY && this.y >= collisionY - 15 && this.velY < 0) {
-                    this.velY = Math.abs(this.velY) * 0.5; 
-                    this.velX = 0; 
-                    this.y = collisionY + 1; 
+                    this.velY = Math.abs(this.velY) * 0.5;
+                    this.velX = 0;
+                    this.y = collisionY + 1;
                     break;
                 }
             }
@@ -93,9 +95,9 @@ export class Player {
             let dx = this.currentSlope.x2 - this.currentSlope.x1;
             let dy = this.currentSlope.y2 - this.currentSlope.y1;
             if (dy < 0) { dx = -dx; dy = -dy; }
-            const angle = Math.atan2(dy, dx); 
+            const angle = Math.atan2(dy, dx);
             this.slideSpeed = Math.min(this.terminalVelocity, this.slideSpeed + (this.gravity * Math.abs(Math.sin(angle))) * delta);
-            this.velX = Math.cos(angle) * this.slideSpeed; 
+            this.velX = Math.cos(angle) * this.slideSpeed;
             this.velY = Math.sin(angle) * this.slideSpeed;
         } else {
             this.slideSpeed = 0;
@@ -103,27 +105,54 @@ export class Player {
             this.velY = Math.min(this.terminalVelocity, this.velY + this.gravity * delta);
 
             // Sterowanie i ładowanie skoku (TWOJA LOGIKA)
-            if (input.jump && this.onGround) {
-                if (!this.jumpCharging) {
-                    this.jumpCharging = true;
-                    this.velX = 0;
-                    this.jumpCharge = this.minJumpCharge;
+            // --- Sterowanie i ładowanie skoku ---
+            if (this.onGround) {
+                if (input.jump) {
+                    if (!this.jumpCharging) {
+                        this.jumpCharging = true;
+                        // Zeruj prędkość tylko na zwykłym bloku, na lodzie pozwól slizgać sie
+                        if (!this.isIce) this.velX = 0;
+                        this.jumpCharge = this.minJumpCharge;
+                    }
+                    this.jumpCharge = Math.min(this.maxJumpCharge, this.jumpCharge + this.chargeSpeed * delta);
+                    this.jumpDirection = input.left ? -1 : (input.right ? 1 : 0);
+                    if (this.jumpCharge >= this.maxJumpCharge) this.performJump();
+                } else if (this.jumpCharging) {
+                    this.performJump();
                 }
-                this.jumpCharge = Math.min(this.maxJumpCharge, this.jumpCharge + this.chargeSpeed * delta);
-                this.jumpDirection = input.left ? -1 : (input.right ? 1 : 0);
-                if (this.jumpCharge >= this.maxJumpCharge) this.performJump();
-            } else if (!input.jump && this.jumpCharging) {
-                this.performJump();
+            } else {
+                //Zapobieganie skokom w powietrzu
+                if (this.jumpCharging) {
+                    this.jumpCharging = false;
+                    this.jumpCharge = 0;
+                }
             }
 
+            //tarcie - spaghetti
+            //naprawde kurwa zacznij wszystko podpisywać bo się w tym gubie
             if (this.onGround && !this.jumpCharging && this.canMoveOnPlatform) {
-                if (input.left) this.velX -= this.acceleration * delta;
-                if (input.right) this.velX += this.acceleration * delta;
+
+                // 1. USTALENIE MNOŻNIKÓW DLA LODU
+                // Na lodzie przyspieszamy wolniej
+                let accelMultiplier = this.isIce ? 0.50 : 1.0;
+                // Na lodzie limit prędkości jest większy
+                let currentMaxSpeed = this.isIce ? this.maxSpeed * 1.25 : this.maxSpeed;
+
+                // 2. PRZYSPIESZENIE (z uwzględnieniem mnożnika)
+                if (input.left) this.velX -= this.acceleration * accelMultiplier * delta;
+                if (input.right) this.velX += this.acceleration * accelMultiplier * delta;
+
+                // 3. TARCIE / HAMOWANIE
                 if (!input.left && !input.right) {
-                    if (this.velX > 0) this.velX = Math.max(0, this.velX - this.friction * delta);
-                    else if (this.velX < 0) this.velX = Math.min(0, this.velX + this.friction * delta);
+                    // Hamowanie na lodzie jest o wiele słabsze niż normalnie (2500)
+                    let f = this.isIce ? 300 : 2500;
+
+                    if (this.velX > 0) this.velX = Math.max(0, this.velX - f * delta);
+                    else if (this.velX < 0) this.velX = Math.min(0, this.velX + f * delta);
                 }
-                this.velX = Math.max(-this.maxSpeed, Math.min(this.velX, this.maxSpeed));
+
+                // 4. LIMIT PRĘDKOŚCI (dynamiczny)
+                this.velX = Math.max(-currentMaxSpeed, Math.min(this.velX, currentMaxSpeed));
             }
         }
 
@@ -136,18 +165,32 @@ export class Player {
             let wasGroundBefore = this.onGround;
             this.onGround = false;
             this.canMoveOnPlatform = true;
+            this.isIce = false;
+
+
+            //logika dla lodu i platform phase
+            const isEven = this.jumpCount % 2 === 0;
 
             for (let i = 0; i < activePlatforms.length; i++) {
                 const plat = activePlatforms[i];
+
+                // LOGIKA FAZ: Jeśli platforma ma fazę, sprawdź czy jest aktywna
+                if (plat.phase === 1 && isEven) continue;    // Pomiń, jeśli faza 1 a skok parzysty
+                if (plat.phase === 2 && !isEven) continue;   // Pomiń, jeśli faza 2 a skok nieparzysty
+
                 if (this.checkCollision(this, plat)) {
-                    if (this.velY > 0 && oldY + this.height <= plat.y + 10) { 
+                    if (this.velY > 0 && oldY + this.height <= plat.y + 10) {
                         // Lądowanie od góry
                         this.y = plat.y - this.height;
                         if (preColY >= 1000) this.fallCount++;
                         this.velY = 0;
                         this.onGround = true;
+
+                        // Obsługa lodu
+                        if (plat.isIce) this.isIce = true;
+
                         if (plat.canMove === false) { this.canMoveOnPlatform = false; this.velX = 0; }
-                        if (!wasGroundBefore) this.velX = 0;
+                        if (!wasGroundBefore && !this.isIce) this.velX = 0;
                     } else if (this.velY < 0 && oldY >= plat.y + plat.height) {
                         // Uderzenie głową
                         this.y = plat.y + plat.height;
@@ -159,13 +202,18 @@ export class Player {
             // B. Potem ruch i kolizja w poziomie (X)
             const oldX = this.x;
             this.x += this.velX * delta;
-            
+
             // Granice mapy
             if (this.x < 0) { this.x = 0; this.velX = 0; }
             if (this.x + this.width > 480) { this.x = 480 - this.width; this.velX = 0; }
 
             for (let i = 0; i < activePlatforms.length; i++) {
                 const plat = activePlatforms[i];
+
+                //Ta sama logika faz co powyżej
+                if (plat.phase === 1 && isEven) continue;
+                if (plat.phase === 2 && !isEven) continue;
+
                 if (this.checkCollision(this, plat)) {
                     // Sprawdzamy, czy to faktycznie kolizja boczna (nie jesteśmy na platformie)
                     if (this.y + this.height > plat.y + 2 && this.y < plat.y + plat.height - 2) {
@@ -221,11 +269,11 @@ export class Player {
     }
 
     reset() {
-        this.x = 100; this.y = -5265;
+        this.x = 400; this.y = -9750;
         this.velX = 0; this.velY = 0;
         this.jumpCharge = 0; this.jumpCharging = false;
         this.playTime = 0; this.jumpCount = 0; this.fallCount = 0;
-        this.onGround = true; 
+        this.onGround = true;
     }
 
     saveGame() {

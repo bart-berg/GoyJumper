@@ -762,6 +762,11 @@ export const platforms = [
   //Checkpoint
   new Platform(270, -9730 , 150, 20),
 
+  new Platform(100, -9800, 200, 20, true, true, 0),
+
+  new Platform(50, -9900, 100, 20, true, false, 1),
+
+  new Platform(0, -10000, 100, 20, true, false, 2),
 ];
 
 
@@ -940,6 +945,7 @@ export const slopes = [
   new Line(125, -9490, 100, -9470, 1, true),
   new Line(125, -9450, 100, -9470, 0, true),
 
+  
 ];
 
 export const npcs = [
