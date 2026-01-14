@@ -1,0 +1,9 @@
+body{
+  margin: 0;
+  background: black;
+  font-family: "PixelGosub", sans-serif;
+}
+
+canvas{
+  display: block;
+}
