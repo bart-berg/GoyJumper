@@ -18,13 +18,14 @@ export const platforms = [
   new Platform(0, 270, 40, 3),
 
   //Góra klatwi prawo
-  new Platform(440, 110, 40, 3),
+  new Platform(440, 120, 40, 3),
 
   //Bariera lewo
   new Platform(0, 0, 2, 360),
 
   //Bariera prawo
-  new Platform(480, 0, 2, 360),
+  new Platform(478, 0, 2, 360), // przesunalem bariere w lewo o 2px i teraz kolizja dziala
+
 
   // ===== Limbo 2 ( y = -0 -> -360 ) =====
 
@@ -32,10 +33,10 @@ export const platforms = [
   new Platform(230, -10, 80, 20),
 
   //Platforma 2 ( odbijasz sie od niej )
-  new Platform(290, -110, 50, 15),
+  new Platform(290, -110, 50, 25),
 
   //Platforma 3 ( odbijasz się od platformy 2 do niej ) ( możliwe jest skok z platformy 1 na 3 ale to jest definitywnie trudniejszy jump)
-  new Platform(180, -110, 50, 15),
+  new Platform(180, -110, 50, 25),
 
   //Platforma 4 ( max jump )
   new Platform(0, -240, 20, 15),
@@ -268,16 +269,16 @@ export const platforms = [
   new Platform(385, -3030, 50, 15),
 
   //Platforma 5
-  new Platform(175, -3070, 120, 10),
-
+  new Platform(195, -3070, 100, 10),
+  
+  //Podłoga 1
+  new Platform(35, -3070, 100, 10),
+  
   //Ściana 1
   new Platform(290, -3140, 10, 80),
 
   //Ściana 2 ( widać na Lust 4 )
   new Platform(220, -3440, 25, 320),
-
-  //Podłoga 1
-  new Platform(35, -3070, 110, 10),
 
   //Bariera gruba lewo
   new Platform(0, -3240, 50, 360),

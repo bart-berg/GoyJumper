@@ -11,6 +11,8 @@ export class Platform {
     }
 
     draw(ctx, jumpCount) {
+
+        
         // Zmiana koloru dla wizualnego rozróżnienia śniegu (opcjonalnie)
         ctx.fillStyle = this.canMove ? "grey" : "#e2e2e2";
 

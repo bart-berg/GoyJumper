@@ -38,6 +38,16 @@ export class Player {
         // --- FLAGI ---
         this.canMoveOnPlatform = true;
         this.isIce = false;
+
+        //WIATR
+        this.windStrength = 0;
+        this.maxWindForce = 400;
+    }
+
+    //Dla nowego screenem z wiatrem napisz screenX z wartościami y
+    isInWindyArea() {
+        const screen0 = (this.y < -9720 && this.y > -10080);
+        return screen0;
     }
 
     formatTime(seconds) {
@@ -51,6 +61,14 @@ export class Player {
     update(input, delta, platforms, slopes) {
         this.playTime += delta;
 
+        // --- LOGIKA WIATRU ---
+        const windCycle = 12; // Pełny cykl zmiany kierunku (12 sekund)
+        this.windStrength = Math.sin(this.playTime * (Math.PI * 2 / windCycle));
+
+        // Warunek: wiatr wieje tylko na konkretnej wysokości (ekran 0)
+        let isWindActive = this.isInWindyArea();
+        let windForce = isWindActive ? this.windStrength * this.maxWindForce : 0;
+        // ---------------------
 
         // Filtrowanie (bezpieczne dla wydajności)
         const currentScreenY = Math.floor(this.y / 360) * 360;
@@ -109,6 +127,11 @@ export class Player {
             // Grawitacja
             this.velY = Math.min(this.terminalVelocity, this.velY + this.gravity * delta);
 
+            // --- WIATR W POWIETRZU ---
+            if (!this.onGround && this.isInWindyArea()) {
+                this.velX += this.windStrength * this.maxWindForce * delta;
+            }
+
             // Sterowanie i ładowanie skoku (TWOJA LOGIKA)
             // --- Sterowanie i ładowanie skoku ---
             if (this.onGround) {
@@ -116,7 +139,12 @@ export class Player {
                     if (!this.jumpCharging) {
                         this.jumpCharging = true;
                         // Zeruj prędkość tylko na zwykłym bloku, na lodzie pozwól slizgać sie
-                        if (!this.isIce) this.velX = 0;
+                        if (!this.isIce) {
+                            // Zamiast totalnego zera, ustawiamy prędkość na taką, jaką dyktuje wiatr
+                            // Dzięki temu postać "stoi" względem wiatru, a nie względem mapy
+                            let windPushVel = this.isInWindyArea() ? (this.windStrength * this.maxWindForce * 0.20) : 0;
+                            this.velX = windPushVel;
+                        }
                         this.jumpCharge = this.minJumpCharge;
                     }
                     this.jumpCharge = Math.min(this.maxJumpCharge, this.jumpCharge + this.chargeSpeed * delta);
@@ -147,19 +175,26 @@ export class Player {
                 if (input.left) this.velX -= this.acceleration * accelMultiplier * delta;
                 if (input.right) this.velX += this.acceleration * accelMultiplier * delta;
 
-                // 3. TARCIE / HAMOWANIE
+                // --- 3. TARCIE Z UWZGLĘDNIENIEM WIATRU ---
                 if (!input.left && !input.right) {
-                    // Hamowanie na lodzie jest o wiele słabsze niż normalnie (2500)
                     let f = this.isIce ? 250 : 2500;
 
-                    if (this.velX > 0) this.velX = Math.max(0, this.velX - f * delta);
-                    else if (this.velX < 0) this.velX = Math.min(0, this.velX + f * delta);
+                    // Cel tarcia to nie 0, ale prędkość nadawana przez wiatr na ziemi
+                    // 0.20 to współczynnik przyczepności (jak bardzo wiatr nas spycha na ziemi)
+                    let targetWindVel = this.isInWindyArea() ? (this.windStrength * this.maxWindForce * 0.20) : 0;
+
+                    if (this.velX > targetWindVel) {
+                        this.velX = Math.max(targetWindVel, this.velX - f * delta);
+                    } else if (this.velX < targetWindVel) {
+                        this.velX = Math.min(targetWindVel, this.velX + f * delta);
+                    }
                 }
 
                 // 4. LIMIT PRĘDKOŚCI (dynamiczny)
                 this.velX = Math.max(-currentMaxSpeed, Math.min(this.velX, currentMaxSpeed));
             }
         }
+
 
         // --- 3. ROZWIĄZANIE KOLIZJI (NAPRAWA CLIPPINGU) ---
         if (!this.onSlope) {
@@ -195,7 +230,7 @@ export class Player {
                         // Obsługa lodu
                         if (plat.isIce) this.isIce = true;
 
-                        
+
 
                         if (plat.canMove === false) { this.canMoveOnPlatform = false; this.velX = 0; }
                         if (!wasGroundBefore && !this.isIce) this.velX = 0;
@@ -248,6 +283,11 @@ export class Player {
         const jumpPower = 155 + (chargePct * 125);
         this.velY = -this.jumpCharge;
 
+        //pęd startowy od wiatru
+        if (this.isInWindyArea()) {
+            this.velX += (this.windStrength * this.maxWindForce) * 0.2;
+        }
+
         // Logika prędkości poziomej przy skoku (ogólnie chodzi o to że zachwujesz predkosć jak skoczysz w gore na lodzie i możesz robić kontry)
         if (this.jumpDirection !== 0) {
             if (this.isIce) {
@@ -293,7 +333,7 @@ export class Player {
     }
 
     reset() {
-        this.x = 400; this.y = -9750;
+        this.x = 320; this.y = -9750;
         this.velX = 0; this.velY = 0;
         this.jumpCharge = 0; this.jumpCharging = false;
         this.playTime = 0; this.jumpCount = 0; this.fallCount = 0;
@@ -318,6 +358,30 @@ export class Player {
             ctx.fillRect(this.x, this.y - 12, this.width, 4);
             ctx.fillStyle = "yellow";
             ctx.fillRect(this.x, this.y - 12, (this.jumpCharge / this.maxJumpCharge) * this.width, 4);
+        }
+
+        // Rysowanie wskaźnika wiatru
+        if (this.isInWindyArea()) {
+            // Obliczamy górną krawędź obecnego ekranu (np. -9720, -10080 itd.)
+            const screenTop = Math.floor(this.y / 360) * 360;
+
+            const barWidth = 100;
+            const barX = 240 - (barWidth / 2); // Środek ekranu (zakładając szerokość 480)
+            const barY = screenTop + 20;       // 20 pikseli od góry obecnego ekranu
+
+            // 1. Tło paska
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillRect(barX, barY, barWidth, 6);
+
+            // 2. Wskaźnik siły (środek to zero)
+            ctx.fillStyle = "cyan";
+            // Rysujemy od środka paska: (barX + 50)
+            ctx.fillRect(barX + (barWidth / 2), barY, this.windStrength * (barWidth / 2), 6);
+
+            // 3. Opcjonalna ramka dla widoczności
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(barX, barY, barWidth, 6);
         }
     }
 }
