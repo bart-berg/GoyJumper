@@ -4,8 +4,11 @@ export class Player {
         this.startY = y;
         this.x = x;
         this.y = y;
-        this.width = 14;
-        this.height = 22;
+        this.width = 16;
+        this.height = 26;
+        this.visualWidth = 32;
+        this.visualHeight = 32;
+        this.facing = 1; // 1 - right, -1 - left
         this.velX = 0;
         this.velY = 0;
 
@@ -13,6 +16,11 @@ export class Player {
         this.jumpCount = 0;
         this.fallCount = 0;
         this.playTime = 0;
+
+        //dla Grafiki
+        this.lastFallCount = this.fallCount;
+        this.isFaceplanting = false;
+        this.walkTimer = 0;
 
         // --- WARTOŚCI FIZYKI (DOKŁADNIE TWOJE) ---
         this.acceleration = 1200;
@@ -44,6 +52,9 @@ export class Player {
         this.maxWindForce = 400;
     }
 
+
+
+
     //Dla nowego screenem z wiatrem napisz screenX z wartościami y
     isInWindyArea() {
         const screen0 = (this.y < -9720 && this.y > -10080);
@@ -61,11 +72,17 @@ export class Player {
     update(input, delta, platforms, slopes) {
         this.playTime += delta;
 
+        if (input.left || input.right) {
+            this.walkTimer += delta;
+        } else {
+            this.walkTimer = 0; // Reset do klatki 'walk1' przy zatrzymaniu
+        }
+
         // --- LOGIKA WIATRU ---
         const windCycle = 12; // Pełny cykl zmiany kierunku (12 sekund)
         this.windStrength = Math.sin(this.playTime * (Math.PI * 2 / windCycle));
 
-        // Warunek: wiatr wieje tylko na konkretnej wysokości (ekran 0)
+        // Warunek: wiatr wieje tylko na konkretnej wysokości
         let isWindActive = this.isInWindyArea();
         let windForce = isWindActive ? this.windStrength * this.maxWindForce : 0;
         // ---------------------
@@ -135,6 +152,11 @@ export class Player {
             // Sterowanie i ładowanie skoku (TWOJA LOGIKA)
             // --- Sterowanie i ładowanie skoku ---
             if (this.onGround) {
+                if (this.isFaceplanting) {
+                    if (input.left || input.right || input.jump) {
+                        this.isFaceplanting = false;
+                    }
+                }
                 if (input.jump) {
                     if (!this.jumpCharging) {
                         this.jumpCharging = true;
@@ -223,9 +245,24 @@ export class Player {
                         // Lądowanie od góry
 
                         this.y = plat.y - this.height;
-                        if (preColY >= 1000) this.fallCount++;
+                        if (preColY >= 1000) {
+                            this.fallCount++;
+                            this.isFaceplanting = true; // Aktywacja flagi
+                            this.velX = 0; // Zatrzymujemy postać przy silnym uderzeniu
+                        }
                         this.velY = 0;
                         this.onGround = true;
+
+                        // Jeśli fallCount wzrósł, aktywuj stan faceplant
+                        if (this.fallCount > this.lastFallCount) {
+                            this.isFaceplanting = true;
+                            this.lastFallCount = this.fallCount;
+                        }
+
+                        // Jeśli gracz zacznie ładować skok lub się ruszy, przerwij faceplant
+                        if (this.jumpCharging || Math.abs(this.velX) > 50) {
+                            this.isFaceplanting = false;
+                        }
 
                         // Obsługa lodu
                         if (plat.isIce) this.isIce = true;
@@ -333,7 +370,7 @@ export class Player {
     }
 
     reset() {
-        this.x = 320; this.y = -9750;
+        this.x = 380; this.y = -9800;
         this.velX = 0; this.velY = 0;
         this.jumpCharge = 0; this.jumpCharging = false;
         this.playTime = 0; this.jumpCount = 0; this.fallCount = 0;
@@ -350,38 +387,101 @@ export class Player {
         return false;
     }
 
-    draw(ctx) {
-        ctx.fillStyle = this.jumpCharging ? "#ff7777" : "red";
-        ctx.fillRect(Math.round(this.x), Math.round(this.y), this.width, this.height);
-        if (this.jumpCharging) {
-            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-            ctx.fillRect(this.x, this.y - 12, this.width, 4);
-            ctx.fillStyle = "yellow";
-            ctx.fillRect(this.x, this.y - 12, (this.jumpCharge / this.maxJumpCharge) * this.width, 4);
+    getSpriteKey(input = {}) {
+        if (this.onGround && this.isFaceplanting) {
+            return 'faceplant';
         }
 
-        // Rysowanie wskaźnika wiatru
+        if (!this.onGround && Math.abs(this.velX) > 300) {
+            return 'knockback';
+        }
+
+        if (this.jumpCharging) return 'charging';
+
+        if (!this.onGround) {
+            return this.velY < 0 ? 'rising' : 'falling';
+        }
+
+        const isMovingInput = input.left || input.right;
+
+        if (this.onGround && isMovingInput && Math.abs(this.velX) > 10) {
+            const cycleDuration = 4 / 5;
+            const progress = (this.walkTimer % cycleDuration) / cycleDuration;
+
+            if (progress < 0.4) return 'walk1';
+            if (progress < 0.5) return 'walk2';
+            if (progress < 0.9) return 'walk3';
+            return 'walk2';
+        }
+
+        return 'standing';
+    }
+
+
+    draw(ctx, spriteManager, input = {}) {
+
+        // 2. RYSOWANIE GRAFIKI (SPRITE)
+        if (spriteManager && spriteManager.isLoaded) {
+            const key = this.getSpriteKey(input);
+            const img = spriteManager.sprites[key];
+
+            if (img) {
+                if (this.onGround && !this.isFaceplanting) {
+                    if (input.right) this.facing = 1;
+                    else if (input.left) this.facing = -1;
+                }
+
+                const xOffset = (this.visualWidth - this.width) / 2;
+                const yOffset = this.visualHeight - this.height;
+
+                ctx.save();
+                ctx.translate(Math.round(this.x), Math.round(this.y));
+
+                if (this.facing === -1) {
+                    ctx.scale(-1, 1);
+                    ctx.translate(-this.width - xOffset, -yOffset);
+                } else {
+                    ctx.translate(-xOffset, -yOffset);
+                }
+
+                ctx.drawImage(img, 0, 0, this.visualWidth, this.visualHeight);
+                ctx.restore();
+            }
+        }
+
+        // 3. Pasek ładowania skoku (nad głową)
+        if (this.jumpCharging) {
+            const barY = Math.round(this.y) - 12;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillRect(Math.round(this.x), barY, this.width, 4);
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(Math.round(this.x), barY, (this.jumpCharge / this.maxJumpCharge) * this.width, 4);
+        }
+
+        // 4. Wskaźnik wiatru
         if (this.isInWindyArea()) {
-            // Obliczamy górną krawędź obecnego ekranu (np. -9720, -10080 itd.)
             const screenTop = Math.floor(this.y / 360) * 360;
-
             const barWidth = 100;
-            const barX = 240 - (barWidth / 2); // Środek ekranu (zakładając szerokość 480)
-            const barY = screenTop + 20;       // 20 pikseli od góry obecnego ekranu
+            const barX = 240 - (barWidth / 2);
+            const barY = screenTop + 20;
 
-            // 1. Tło paska
             ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
             ctx.fillRect(barX, barY, barWidth, 6);
-
-            // 2. Wskaźnik siły (środek to zero)
             ctx.fillStyle = "cyan";
-            // Rysujemy od środka paska: (barX + 50)
             ctx.fillRect(barX + (barWidth / 2), barY, this.windStrength * (barWidth / 2), 6);
-
-            // 3. Opcjonalna ramka dla widoczności
             ctx.strokeStyle = "white";
             ctx.lineWidth = 1;
             ctx.strokeRect(barX, barY, barWidth, 6);
         }
+
+        ///Debug - hitbox
+        ///---------------------------------------------------------------
+        ctx.save();
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 1;
+
+        ctx.strokeRect(Math.round(this.x), Math.round(this.y), this.width, this.height);
+        ctx.restore();
+        //---------------------------------------------------------------
     }
 }

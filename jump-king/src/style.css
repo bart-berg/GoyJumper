@@ -1,9 +1,13 @@
-body{
+body {
   margin: 0;
   background: black;
   font-family: "PixelGosub", sans-serif;
 }
 
-canvas{
+canvas {
   display: block;
+  image-rendering: -moz-pixelated;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }

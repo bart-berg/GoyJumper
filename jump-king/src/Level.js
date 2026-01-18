@@ -12,7 +12,7 @@ export const platforms = [
   new Platform(0, 325, 480, 35),
 
   //Jebany klucz "Ej robert wymyśl co to jest" pierdol sie kurwa
-  new Platform(100, 200, 270, 130),
+  new Platform(100, 208, 270, 128),
 
   //Góra klatwi/spawna
   new Platform(0, 270, 40, 3),
@@ -30,13 +30,13 @@ export const platforms = [
   // ===== Limbo 2 ( y = -0 -> -360 ) =====
 
   //Platforma 1 ( widać na Limbo 1 ) 
-  new Platform(230, -10, 80, 20),
+  new Platform(230, -10, 65, 20),
 
   //Platforma 2 ( odbijasz sie od niej )
-  new Platform(290, -110, 50, 25),
+  new Platform(290, -150, 50, 25),
 
   //Platforma 3 ( odbijasz się od platformy 2 do niej ) ( możliwe jest skok z platformy 1 na 3 ale to jest definitywnie trudniejszy jump)
-  new Platform(180, -110, 50, 25),
+  new Platform(180, -150, 50, 25),
 
   //Platforma 4 ( max jump )
   new Platform(0, -240, 20, 15),
@@ -45,7 +45,7 @@ export const platforms = [
   new Platform(0, -360, 2, 360),
 
   //Bariera prawo
-  new Platform(480, -360, 2, 360),
+  new Platform(478, -360, 2, 360),
 
   // ===== Limbo 3 ( y = -360 -> -720 ) =====
 
@@ -62,7 +62,7 @@ export const platforms = [
   new Platform(255, -460, 70, 20),
 
   //Platforma 5 ( blokuje skok platformy 1 i 2 )
-  new Platform(180, -440, 100, 25),
+  new Platform(175, -445, 100, 20),
 
   //Platforma 6
   new Platform(45, -550, 70, 20),
@@ -74,7 +74,7 @@ export const platforms = [
   new Platform(0, -720, 2, 360),
 
   //Bariera prawo
-  new Platform(480, -720, 2, 360),
+  new Platform(478, -720, 2, 360),
 
   // ===== Limbo 4 ( y = -720 -> -1080 ) =====
 
@@ -94,7 +94,7 @@ export const platforms = [
   new Platform(0, -1080, 2, 360),
 
   //Bariera prawo
-  new Platform(480, -1080, 2, 360),
+  new Platform(478, -1080, 2, 360),
 
   // ===== Limbo 5 ( y = -1080 -> -1440 ) =====
 
@@ -123,7 +123,7 @@ export const platforms = [
   new Platform(0, -1440, 2, 360),
 
   //Bariera prawo
-  new Platform(480, -1440, 2, 360),
+  new Platform(478, -1440, 2, 360),
 
   // ===== Limbo 6 ( y = -1440 -> -1800 ) =====
 
@@ -149,7 +149,7 @@ export const platforms = [
   new Platform(0, -1800, 2, 360),
 
   //Bariera prawo
-  new Platform(480, -1800, 2, 360),
+  new Platform(478, -1800, 2, 360),
 
 
   // ===== Limbo 7 ( y = -1800 -> -2160 ) =====
@@ -182,7 +182,7 @@ export const platforms = [
   new Platform(0, -2160, 2, 360),
 
   //Bariera prawo
-  new Platform(480, -2160, 2, 360),
+  new Platform(478, -2160, 2, 360),
 
   //Bariera gruba lewo
   new Platform(0, -2220, 50, 100),

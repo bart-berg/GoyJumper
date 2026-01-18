@@ -2,6 +2,7 @@ import { Player } from "./Player.js";
 import { input, consumeEnter, consumeEscape, consumeUp, consumeDown } from "./Input.js";
 import { platforms, slopes, npcs } from "./Level.js";
 import { UI } from "./UI.js";
+import { SpriteManager } from "./Graphics.js";
 
 //Debug
 //---------------------------------------------------------------
@@ -22,7 +23,7 @@ const GameState = {
 let gameState = GameState.MENU;
 let scale, offsetX, offsetY;
 let lastTime = 0;
-let pauseSelection = 0; 
+let pauseSelection = 0;
 
 const player = new Player(220, -2200);
 player.loadGame(); // Wczytuje zapis przy starcie/odświeżeniu
@@ -33,6 +34,11 @@ function resizeCanvas() {
   scale = Math.min(canvas.width / 480, canvas.height / 360);
   offsetX = (canvas.width - 480 * scale) / 2;
   offsetY = (canvas.height - 360 * scale) / 2;
+
+  ctx.imageSmoothingEnabled = false;
+  ctx.webkitImageSmoothingEnabled = false;
+  ctx.mozImageSmoothingEnabled = false;
+  ctx.msImageSmoothingEnabled = false;
 }
 
 window.addEventListener("resize", resizeCanvas);
@@ -48,7 +54,7 @@ function gameLoop(time) {
     consumeEscape();
     if (gameState === GameState.PLAYING) {
       gameState = GameState.PAUSED;
-      pauseSelection = 0; 
+      pauseSelection = 0;
     } else if (gameState === GameState.PAUSED) {
       gameState = GameState.PLAYING;
     }
@@ -57,12 +63,12 @@ function gameLoop(time) {
   // --- 2. LOGIKA STANÓW ---
   if (gameState === GameState.MENU) {
     UI.drawMenu(ctx, canvas, scale, offsetX, offsetY);
-    
+
     if (input.enter) {
       consumeEnter();
       gameState = GameState.PLAYING;
     }
-  } 
+  }
   else if (gameState === GameState.PAUSED) {
     // Nawigacja w pauzie
     if (input.up) { consumeUp(); pauseSelection = (pauseSelection - 1 + 3) % 3; }
@@ -84,7 +90,7 @@ function gameLoop(time) {
 
     renderGameScene();
     UI.drawPauseMenu(ctx, player, scale, offsetX, offsetY, pauseSelection);
-  } 
+  }
   else if (gameState === GameState.PLAYING) {
     player.update(input, delta, platforms, slopes);
     npcs.forEach(n => n.update(delta, player));
@@ -95,7 +101,7 @@ function gameLoop(time) {
   requestAnimationFrame(gameLoop);
 }
 
-  function renderGameScene() {
+function renderGameScene() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   //Wypełnienie całego tła na czarno
@@ -116,7 +122,7 @@ function gameLoop(time) {
   slopes.forEach(s => s.draw(ctx));
   platforms.forEach(p => p.draw(ctx, player.jumpCount));
   npcs.forEach(n => n.draw(ctx));
-  player.draw(ctx);
+  player.draw(ctx, SpriteManager, input);
 
   ctx.restore();
   UI.drawHUD(ctx, player, scale, offsetX, offsetY);
@@ -124,12 +130,12 @@ function gameLoop(time) {
   //Debug
   //---------------------------------------------------------------
   if (DEBUG) {
-  ctx.save();
-  ctx.fillStyle = "lime";
-  ctx.font = "12px monospace";
-  ctx.fillText(`X: ${mouseX}  Y: ${mouseY}`, 10, 340);
-  ctx.restore();
-}
+    ctx.save();
+    ctx.fillStyle = "lime";
+    ctx.font = "12px monospace";
+    ctx.fillText(`X: ${mouseX}  Y: ${mouseY}`, 10, 340);
+    ctx.restore();
+  }
   //---------------------------------------------------------------
 }
 
@@ -150,4 +156,14 @@ canvas.addEventListener("mousemove", (e) => {
 });
 //---------------------------------------------------------------
 
-requestAnimationFrame(gameLoop);
+async function init() {
+  console.log("Ładowanie zasobów...");
+  await SpriteManager.load(); // Czekamy aż wszystkie 9 plików PNG będzie w pamięci
+  console.log("Zasoby załadowane, start gry.");
+
+  // Ustawiamy czas startowy i ruszamy z pętlą
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+}
+
+init();
