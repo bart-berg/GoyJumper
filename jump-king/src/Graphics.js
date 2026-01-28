@@ -38,3 +38,4 @@ export const SpriteManager = {
         console.log('All sprites loaded');
     }
 };
+

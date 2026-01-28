@@ -50,6 +50,10 @@ export class Player {
         //WIATR
         this.windStrength = 0;
         this.maxWindForce = 400;
+
+        //DEBUG
+        this.debugMode = false;
+        this.debugSpeed = 500; // Prędkość latania
     }
 
 
@@ -57,8 +61,17 @@ export class Player {
 
     //Dla nowego screenem z wiatrem napisz screenX z wartościami y
     isInWindyArea() {
-        const screen0 = (this.y < -9720 && this.y > -10080);
-        return screen0;
+        const screen1 = (this.y < -10800 && this.y > -11160);
+        const screen2 = (this.y < -11160 && this.y > -11520);
+        const screen3 = (this.y < -11520 && this.y > -11880);
+        const screen4 = (this.y < -11880 && this.y > -12240);
+        const screen5 = (this.y < -12240 && this.y > -12600);
+        const screen6 = (this.y < -12600 && this.y > -12960);
+        //Treachery
+        const screen7 = (this.y < -16560 && this.y > -16920);
+        const screen8 = (this.y < -16920 && this.y > -17280);
+        const screen9 = (this.y < -17280 && this.y > -17640);
+        return screen1 || screen2 || screen3 || screen4 || screen5 || screen6 || screen7 || screen8 || screen9;
     }
 
     formatTime(seconds) {
@@ -70,6 +83,26 @@ export class Player {
     }
 
     update(input, delta, platforms, slopes) {
+        if (input.debug) {
+            this.debugMode = !this.debugMode;
+            input.debug = false;
+        }
+        // --- TRYB DEBUGOWY (LATAJĄCY) ---
+        if (this.debugMode) {
+            this.velX = 0;
+            this.velY = 0;
+            this.onGround = true;
+
+            if (input.left) this.x -= this.debugSpeed * delta;
+            if (input.right) this.x += this.debugSpeed * delta;
+            if (input.up) this.y -= this.debugSpeed * delta; // Upewnij się, że input.up jest w Input.js
+            if (input.down) this.y += this.debugSpeed * delta;
+
+            return; // POMIŃ resztę fizyki, kolizji i wiatru
+        }
+        // --- TRYB DEBUGOWY KONIEC ---
+
+
         this.playTime += delta;
 
         if (input.left || input.right) {
@@ -370,7 +403,7 @@ export class Player {
     }
 
     reset() {
-        this.x = 380; this.y = -9800;
+        this.x = 240; this.y = -10740;
         this.velX = 0; this.velY = 0;
         this.jumpCharge = 0; this.jumpCharging = false;
         this.playTime = 0; this.jumpCount = 0; this.fallCount = 0;

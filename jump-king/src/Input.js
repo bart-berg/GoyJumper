@@ -5,7 +5,8 @@ export const input = {
     up: false,
     down: false,
     enter: false,
-    escape: false
+    escape: false,
+    debug: false
 };
 
 // Funkcje do "konsumowania" kliknięć (używane, by akcja nie powtarzała się co klatkę)
@@ -22,6 +23,8 @@ window.addEventListener("keydown", (e) => {
     if (e.code === "Space")                           input.jump = true;
     if (e.code === "Enter")                           input.enter = true;
     if (e.code === "Escape")                          input.escape = true;
+    //Debug
+    if (e.code === "KeyP")                            input.debug = true;
 });
 
 window.addEventListener("keyup", (e) => {
@@ -32,4 +35,6 @@ window.addEventListener("keyup", (e) => {
     if (e.code === "Space")                           input.jump = false;
     if (e.code === "Enter")                           input.enter = false;
     if (e.code === "Escape")                          input.escape = false;
+    //Debug
+    if (e.code === "KeyP")                            input.debug = false;
 });

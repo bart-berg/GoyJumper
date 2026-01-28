@@ -4,6 +4,16 @@ import { platforms, slopes, npcs } from "./Level.js";
 import { UI } from "./UI.js";
 import { SpriteManager } from "./Graphics.js";
 
+const backgrounds = [];
+const TOTAL_SCREENS = 30; // trzeba pisać 1 mniej niż faktyczna liczba ekranów
+
+for (let i = 0; i <= TOTAL_SCREENS; i++) {
+    const img = new Image();
+    img.src = `backgrounds/bg${i}.png`;
+    backgrounds[i] = img;
+}
+
+
 //Debug
 //---------------------------------------------------------------
 const DEBUG = true;
@@ -114,10 +124,21 @@ function renderGameScene() {
 
   //wypełnienie środka canvasa
   ctx.fillStyle = "#3f1313";
-  ctx.fillRect(0, 0, 480, 360);
+  ctx.fillRect(0, 0, 480, 720);
 
   const screenY = Math.floor(player.y / 360);
   ctx.translate(0, -screenY * 360);
+
+  // --- BG ---
+  // rysuje tylko potrzebne tła
+  const currentIdx = Math.abs(screenY); 
+  
+  // rysuj obecny i sąsiednie ekrany
+  for (let i = currentIdx - 1; i <= currentIdx + 1; i++) {
+      if (i >= 0 && i <= TOTAL_SCREENS && backgrounds[i].complete) {
+          ctx.drawImage(backgrounds[i], 0, i * -360, 480, 360);
+      }
+  }
 
   slopes.forEach(s => s.draw(ctx));
   platforms.forEach(p => p.draw(ctx, player.jumpCount));
