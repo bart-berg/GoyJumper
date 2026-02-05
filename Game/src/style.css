@@ -1,0 +1,14 @@
+body {
+  margin: 0;
+  background: black;
+  font-family: "Blashphemous", sans-serif;
+}
+
+canvas {
+  display: block;
+  image-rendering: -moz-pixelated;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
