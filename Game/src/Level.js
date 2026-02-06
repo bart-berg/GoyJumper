@@ -23,10 +23,10 @@ export const platforms = [
   new Platform(440, 115, 40, 30),
 
   //Bariera lewo
-  new Platform(0, 0, 2, 360),
+  new Platform(0, 0, 8, 360),
 
   //Bariera prawo
-  new Platform(478, 0, 2, 360),
+  new Platform(472, 0, 8, 360),
 
   // ===== Limbo 2 ( y = -0 -> -360 ) =====
 
@@ -43,10 +43,10 @@ export const platforms = [
   new Platform(0, -240, 30, 50),
 
   //Bariera lewo
-  new Platform(0, -360, 2, 360),
+  new Platform(0, -360, 8, 360),
 
   //Bariera prawo
-  new Platform(478, -360, 2, 360),
+  new Platform(472, -360, 8, 360),
 
   // ===== Limbo 3 ( y = -360 -> -720 ) =====
 
@@ -72,10 +72,10 @@ export const platforms = [
   new Platform(180, -660, 40, 30),
 
   //Bariera lewo
-  new Platform(0, -720, 2, 360),
+  new Platform(0, -720, 8, 360),
 
   //Bariera prawo
-  new Platform(478, -720, 2, 360),
+  new Platform(472, -720, 8, 360),
 
   // ===== Limbo 4 ( y = -720 -> -1080 ) =====
 
@@ -92,10 +92,10 @@ export const platforms = [
   new Platform(180, -940, 50, 20),
 
   //Bariera lewo
-  new Platform(0, -1080, 2, 360),
+  new Platform(0, -1080, 8, 360),
 
   //Bariera prawo
-  new Platform(478, -1080, 2, 360),
+  new Platform(472, -1080, 8, 360),
 
   // ===== Limbo 5 ( y = -1080 -> -1440 ) =====
 
@@ -121,10 +121,10 @@ export const platforms = [
   new Platform(310, -1340, 20, 160),
 
   //Bariera lewo
-  new Platform(0, -1440, 2, 360),
+  new Platform(0, -1440, 8, 360),
 
   //Bariera prawo
-  new Platform(478, -1440, 2, 360),
+  new Platform(472, -1440, 8, 360),
 
   // ===== Limbo 6 ( y = -1440 -> -1800 ) =====
 
@@ -147,10 +147,10 @@ export const platforms = [
   new Platform(90, -1560, 15, 120),
 
   //Bariera lewo
-  new Platform(0, -1800, 2, 360),
+  new Platform(0, -1800, 8, 360),
 
   //Bariera prawo
-  new Platform(478, -1800, 2, 360),
+  new Platform(472, -1800, 8, 360),
 
 
   // ===== Limbo 7 ( y = -1800 -> -2160 ) =====
@@ -180,10 +180,10 @@ export const platforms = [
   new Platform(0, -2050, 50, 50),
 
   //Bariera lewo
-  new Platform(0, -2160, 2, 360),
+  new Platform(0, -2160, 8, 360),
 
   //Bariera prawo
-  new Platform(478, -2160, 2, 360),
+  new Platform(472, -2160, 8, 360),
 
   //Bariera gruba lewo
   new Platform(0, -2220, 50, 100),
